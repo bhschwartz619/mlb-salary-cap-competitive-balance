@@ -1,10 +1,8 @@
 # The Price of Parity: Salary Restrictions and Competitive Balance in Major League Baseball
 
-## Overview
+## Abstract
 
-Major League Baseball (MLB) currently utilizes a Competitive Balance Tax (CBT) to discourage excessive team payrolls. With MLB's economic structure facing renewed scrutiny ahead of upcoming Collective Bargaining Agreement negotiations, this research examines how alternative salary restrictions could affect competitive balance across the league.
-
-This project evaluates hypothetical salary cap and salary floor structures using historical MLB payroll, player performance, and team performance data. The analysis will estimate the relationships among team spending, player value measured by Wins Above Replacement (WAR), and team wins before using simulation to evaluate alternative payroll structures.
+Major League Baseball (MLB) currently utilizes a Competitive Balance Tax (CBT) to discourage excessive payrolls, a system facing particular scrutiny entering the 2026–2027 offseason and upcoming Collective Bargaining Agreement negotiations. Central to these discussions is whether the existing CBT sufficiently promotes competitive balance or whether MLB should follow other major American professional sports leagues by instituting a salary cap, salary floor, or both. This study examines how alternative salary restrictions could affect competitive balance across MLB. Historical payroll, player performance, and team performance data are used to estimate the relationships among team spending, player value measured by Wins Above Replacement (WAR), and team wins. These relationships provide the basis for simulating how various salary cap and floor thresholds could redistribute payroll and player talent across all 30 MLB clubs. Monte Carlo simulations of a 162-game season are then used to estimate how each structure affects regular-season outcomes and playoff qualification. Competitive balance is evaluated using multiple measures to capture different dimensions of parity across the league. By comparing these measures across alternative payroll structures, this study provides data-driven evidence on the potential consequences of salary restrictions as MLB considers changes to its economic structure.
 
 ## Research Question
 
