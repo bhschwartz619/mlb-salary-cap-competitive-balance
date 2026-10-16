@@ -12,7 +12,7 @@ from pathlib import Path
 # (e.g. for testing); otherwise the OneDrive folder is used.
 BASE_DIR = Path(os.environ.get(
     "WAR_RESEARCH_DIR",
-    "C:/Users/bhsch/OneDrive/Documents/MSBA/Fall 2026/Research",
+    Path(__file__).resolve().parent.parent,
 ))
 
 RAW_STANDINGS_DIR = BASE_DIR / "Standings_Files"
