@@ -5,6 +5,12 @@ merged_war_standings.csv
 correlation_matrix.csv
 correlation_heatmap.png
 *_regression.txt
+payroll_players.csv
+payroll_by_position.csv
+opening_day_salaries.csv
+
+# Cot's Baseball Contracts salary data (not redistributed)
+Salary_Files/
 
 # Python cache
 __pycache__/

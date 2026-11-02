@@ -8,8 +8,9 @@ from pathlib import Path
 # -----------------------------
 # Folders
 # -----------------------------
-# Set the WAR_RESEARCH_DIR environment variable to point somewhere else
-# (e.g. for testing); otherwise the OneDrive folder is used.
+# By default, the data folders are one level above this script's folder
+# (e.g. for_git/ when the scripts are in for_git/Updated scripts/).
+# Set the WAR_RESEARCH_DIR environment variable to point somewhere else.
 BASE_DIR = Path(os.environ.get(
     "WAR_RESEARCH_DIR",
     Path(__file__).resolve().parent.parent,
@@ -17,8 +18,14 @@ BASE_DIR = Path(os.environ.get(
 
 RAW_STANDINGS_DIR = BASE_DIR / "Standings_Files"
 RAW_WAR_DIR = BASE_DIR / "WAR_Files"
+RAW_PAYROLL_DIR = BASE_DIR / "Salary_Files"   # Cot's sheets, one subfolder per season
 CLEAN_STANDINGS_DIR = BASE_DIR / "clean_Standings_Files"
 CLEAN_WAR_DIR = BASE_DIR / "clean_WAR_Files"
+
+# Cleaned payroll: one row per player, and one row per team-season
+PAYROLL_PLAYERS_FILE = BASE_DIR / "payroll_players.csv"
+PAYROLL_BY_POSITION_FILE = BASE_DIR / "payroll_by_position.csv"
+OD_SALARIES_FILE = BASE_DIR / "opening_day_salaries.csv"   # one row per rostered player
 
 MERGED_FILE = BASE_DIR / "merged_war_standings.csv"
 CORRELATION_FILE = BASE_DIR / "correlation_matrix.csv"
@@ -42,6 +49,15 @@ WAR_COLS = POSITION_COLS + PITCHER_COLS + ["TotalWAR"]
 
 # Columns in the correlation matrix / heatmap
 CORRELATION_COLS = WAR_COLS + ["W"]
+
+# Payroll position groups (built from Cot's position codes).
+# Cot's often lists outfielders only as "of", so OF holds those players and
+# Pay_OF_All (LF + CF + RF + OF) is the reliable outfield total.
+# UTIL = hitters with a position code that isn't one of the above.
+# Other = money not tied to a rostered player (released/DFA'd players,
+# buyouts, cash paid to or received from other teams in trades).
+PAYROLL_GROUPS = ["C", "1B", "2B", "3B", "SS", "LF", "CF", "RF", "OF",
+                  "DH", "UTIL", "SP", "RP", "Other"]
 
 # Predictors in the positional regression.
 # "All P" is left out for now: if it already includes SP + RP, using all three

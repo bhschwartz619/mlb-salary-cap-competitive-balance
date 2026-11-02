@@ -36,6 +36,33 @@ def merge_single_season(war_file, standings_file, year):
     return merged
 
 
+def add_payroll(full_df):
+    """Join payroll by position (if it has been built) on Year + Team."""
+    if not config.PAYROLL_BY_POSITION_FILE.exists():
+        print("No payroll file found, merging without payroll.")
+        return full_df
+
+    payroll = pd.read_csv(config.PAYROLL_BY_POSITION_FILE)
+    merged = full_df.merge(payroll, on=["Year", "Team"], how="left",
+                           validate="one_to_one", indicator=True)
+
+    missing = merged[merged["_merge"] == "left_only"]
+    if not missing.empty:
+        print(f"⚠️ {len(missing)} team-seasons have no payroll data:")
+        print(missing.groupby("Year")["Team"].apply(list).to_string())
+    merged = merged.drop(columns="_merge")
+
+    # Outfield WAR as one group, to match Pay_OF_All
+    merged["OF_All"] = merged[["LF", "CF", "RF"]].sum(axis=1, min_count=1)
+
+    # Payroll relative to that season's league average (1.0 = average),
+    # so seasons with different overall salary levels can be compared
+    for col in ["Cots_OD_Payroll", "Pay_Total"]:
+        merged[f"{col}_Rel"] = merged[col] / merged.groupby("Year")[col].transform("mean")
+
+    return merged
+
+
 def main():
     all_data = []
 
@@ -57,6 +84,8 @@ def main():
     dupes = full_df[full_df.duplicated(subset=["Year", "Team"], keep=False)]
     if not dupes.empty:
         raise ValueError(f"Duplicate team-seasons found:\n{dupes[['Year', 'Team']]}")
+
+    full_df = add_payroll(full_df)
 
     print("\nTeams per season:")
     print(full_df.groupby("Year")["Team"].nunique().to_string())
