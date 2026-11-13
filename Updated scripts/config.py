@@ -33,6 +33,15 @@ HEATMAP_FILE = BASE_DIR / "correlation_heatmap.png"
 REGRESSION_TOTAL_FILE = BASE_DIR / "totalwar_wins_regression.txt"
 REGRESSION_POS_FILE = BASE_DIR / "war_wins_regression.txt"
 
+# Salary -> WAR -> wins (salary_analysis.py)
+SALARY_RESULTS_FILE = BASE_DIR / "salary_war_wins_results.txt"
+SALARY_SUMMARY_FILE = BASE_DIR / "salary_war_wins_summary.csv"
+PAYROLL_TO_WINS_FILE = BASE_DIR / "payroll_to_wins_table.csv"
+
+# Paper figures and tables (figures.py)
+FIGURES_DIR = BASE_DIR / "figures"
+TABLES_DIR = BASE_DIR / "tables"
+
 # -----------------------------
 # Columns
 # -----------------------------

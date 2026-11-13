@@ -1,0 +1,16 @@
+Model,Term,Per $1M,CI_low,CI_high,p_value,$M per 1 WAR,R2,N,$M per 1 win
+WAR ~ payroll,Payroll,0.0694,0.0519,0.0869,0.0,14.4,0.151,330,
+WAR ~ payroll + team FE,Payroll,0.068,0.0415,0.0944,0.0,14.7,0.407,330,
+Wins ~ payroll,Payroll,0.0683,0.0495,0.0871,0.0,,0.13,330,14.6
+Wins ~ payroll + WAR,Payroll,0.0002,-0.0079,0.0083,0.966,,0.856,330,
+WAR ~ hitter + pitcher pay,Hit_Pay,0.0393,0.0034,0.0753,0.0319,25.4,0.159,330,
+WAR ~ hitter + pitcher pay,Pit_Pay,0.1025,0.0617,0.1432,0.0,9.8,0.159,330,
+WAR ~ hitter + SP + RP pay,Hit_Pay,0.0359,-0.0004,0.0723,0.0525,,0.161,330,
+WAR ~ hitter + SP + RP pay,SP_Pay,0.092,0.0453,0.1387,0.0001,10.9,0.161,330,
+WAR ~ hitter + SP + RP pay,RP_Pay,0.1517,0.0422,0.2613,0.0066,6.6,0.161,330,
+Catcher WAR ~ Catcher pay,Catcher_Pay,0.0345,0.0122,0.0568,0.0024,29.0,0.028,330,
+Infield WAR ~ Infield pay,Infield_Pay,0.0302,0.0069,0.0536,0.0112,33.1,0.02,330,
+Outfield WAR ~ Outfield pay,Outfield_Pay,0.0441,0.0223,0.066,0.0001,22.7,0.053,330,
+DH WAR ~ DH pay,DH_Pay,0.0472,0.0269,0.0676,0.0,21.2,0.11,330,
+Starters WAR ~ Starters pay,Starters_Pay,0.04,0.0214,0.0586,0.0,25.0,0.057,330,
+Relievers WAR ~ Relievers pay,Relievers_Pay,0.0207,-0.0063,0.0477,0.1329,,0.007,330,

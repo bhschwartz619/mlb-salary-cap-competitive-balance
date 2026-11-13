@@ -1,14 +1,15 @@
 """
-Run the full pipeline in order: clean → clean payroll → merge → analysis.
+Run the full pipeline in order: clean → clean payroll → merge → analysis → salary analysis → figures.
 Use this instead of running the steps one at a time so nothing is analyzed
 from stale files.
 
-(download_payroll.py is a one-time download and is not run here.)
 """
 import clean
 import clean_payroll
 import merge
 import analysis
+import salary_analysis
+import figures
 
 
 def main():
@@ -23,6 +24,12 @@ def main():
 
     print("\n########## STEP 3: ANALYSIS ##########")
     analysis.main()
+
+    print("\n########## STEP 4: SALARY -> WAR -> WINS ##########")
+    salary_analysis.main()
+
+    print("\n########## STEP 5: FIGURES & TABLES ##########")
+    figures.main()
 
     print("\nDone.")
 

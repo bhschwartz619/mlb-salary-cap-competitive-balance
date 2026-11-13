@@ -83,6 +83,9 @@ CORRECTIONS = {
 END_OF_LIST = ("minors", "benefits", "payroll", "total", "threshold", "bonus pool",
                "note", "cbt", "tax", "history")
 
+# MLB minimum salary, used to spot minor leaguers on 2026+ sheets
+MLB_MINIMUM_SALARY = {2026: 780_000}
+
 HITTER_CODES = {"c": "C", "1b": "1B", "lb": "1B", "2b": "2B", "3b": "3B", "ss": "SS",
                 "lf": "LF", "cf": "CF", "rf": "RF", "of": "OF", "dh": "DH"}
 
@@ -137,9 +140,44 @@ def roster_table(players):
                               ascending=[True, True, False]).reset_index(drop=True)
 
 
+def drop_minors_block(items, od_total):
+    """
+    From 2026, Cot's also lists the 40-man players who opened the season in the
+    minors (with projected minor-league pay), in a block after the active roster.
+    That block is not part of the Opening Day payroll.
+
+    The active roster comes first, so the minors block is everything with a
+    position from some row onward. The boundary is the row where the players
+    above it (plus money rows such as released players and injured-list
+    replacements) add up to Cot's Opening Day total. If no row matches, players
+    paid less than the MLB minimum salary are treated as the minors block.
+    Returns (kept_items, dropped_items).
+    """
+    pos_idx = [i for i, it in enumerate(items) if it["Pos"]]
+    if not pos_idx:
+        return items, []
+
+    def split(start):
+        drop = set(pos_idx[start:])
+        return ([it for i, it in enumerate(items) if i not in drop],
+                [it for i, it in enumerate(items) if i in drop])
+
+    if od_total:
+        for k in range(len(pos_idx), -1, -1):        # drop as few rows as possible
+            kept, dropped = split(k)
+            if abs(sum(it["Salary"] for it in kept) - od_total) <= 1:
+                return kept, dropped
+
+    # Fallback: anyone paid less than the MLB minimum salary was in the minors
+    minimum = MLB_MINIMUM_SALARY.get(items[pos_idx[0]]["Year"], 0)
+    kept = [it for it in items if not (it["Pos"] and it["Salary"] < minimum)]
+    dropped = [it for it in items if it["Pos"] and it["Salary"] < minimum]
+    return kept, dropped
+
+
 def team_from_filename(path):
     """'MLB Chicago AL 15 OD - ....csv' -> 'Chicago White Sox'"""
-    match = re.match(r"MLB (.+?) (?:OD )?\d\d\b", Path(path).name)
+    match = re.match(r"MLB (.+?) (?:OD ?)?\d\d\b", Path(path).name)
     city = match.group(1).strip().lower() if match else ""
     if city not in CITY_TO_TEAM:
         raise ValueError(f"[{Path(path).name}] Can't tell which team this is (city '{city}')")
@@ -200,12 +238,19 @@ def parse_cots_file(path, season):
                 "Group": position_group(r[1]), "Salary": value,
                 "Note": r[note_col] if note_col is not None and not r[1] else "",
             })
+        elif "replacement" in low and season >= 2026:
+            # From 2026, Cot's Opening Day total includes injured-list replacements
+            if value and in_list:
+                items.append({"Year": season, "Team": team, "Player": name, "Pos": "",
+                              "Group": "Other", "Salary": value, "Note": name})
         elif any(word in low for word in END_OF_LIST):
             in_list = False
         # other labels ("Injured List", "Injured list replacements", section names)
         # are skipped; Cot's Opening Day totals don't include them
 
     cots_total = totals.get("od") or totals.get("running") or totals.get("total")
+    if season >= 2026:
+        items, _minors = drop_minors_block(items, cots_total)
     if cots_total is None:
         print(f"[{label}] No Opening Day total found")
 
