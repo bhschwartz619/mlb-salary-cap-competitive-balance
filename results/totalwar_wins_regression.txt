@@ -3,8 +3,8 @@
 Dep. Variable:                      W   R-squared:                       0.856
 Model:                            OLS   Adj. R-squared:                  0.855
 Method:                 Least Squares   F-statistic:                     1942.
-Date:                Wed, 11 Nov 2026   Prob (F-statistic):          7.65e-140
-Time:                        04:57:37   Log-Likelihood:                -987.84
+Date:                Fri, 13 Nov 2026   Prob (F-statistic):          7.65e-140
+Time:                        16:47:02   Log-Likelihood:                -987.84
 No. Observations:                 330   AIC:                             1980.
 Df Residuals:                     328   BIC:                             1987.
 Df Model:                           1                                         

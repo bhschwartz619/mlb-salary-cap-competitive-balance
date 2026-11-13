@@ -8,39 +8,53 @@ from pathlib import Path
 # -----------------------------
 # Folders
 # -----------------------------
-# By default, the data folders are one level above this script's folder
-# (e.g. for_git/ when the scripts are in for_git/Updated scripts/).
+# The project folder is one level above this script's folder
+# (for_git/ when the scripts are in for_git/scripts/).
 # Set the WAR_RESEARCH_DIR environment variable to point somewhere else.
 BASE_DIR = Path(os.environ.get(
     "WAR_RESEARCH_DIR",
     Path(__file__).resolve().parent.parent,
 ))
 
-RAW_STANDINGS_DIR = BASE_DIR / "Standings_Files"
-RAW_WAR_DIR = BASE_DIR / "WAR_Files"
-RAW_PAYROLL_DIR = BASE_DIR / "Salary_Files"   # Cot's sheets, one subfolder per season
-CLEAN_STANDINGS_DIR = BASE_DIR / "clean_Standings_Files"
-CLEAN_WAR_DIR = BASE_DIR / "clean_WAR_Files"
+# data/raw: files as downloaded, never edited
+RAW_DIR = BASE_DIR / "data" / "raw"
+RAW_STANDINGS_DIR = RAW_DIR / "standings"     # Baseball-Reference standings, one file per season
+RAW_WAR_DIR = RAW_DIR / "war"                 # Baseball-Reference WAR leaderboards, one file per season
+RAW_PAYROLL_DIR = RAW_DIR / "salary"          # Cot's Opening Day sheets, one subfolder per season
+
+# data/processed: built by the pipeline
+PROCESSED_DIR = BASE_DIR / "data" / "processed"
+CLEAN_STANDINGS_DIR = PROCESSED_DIR / "standings"
+CLEAN_WAR_DIR = PROCESSED_DIR / "war"
+PROCESSED_SALARY_DIR = PROCESSED_DIR / "salary"
 
 # Cleaned payroll: one row per player, and one row per team-season
-PAYROLL_PLAYERS_FILE = BASE_DIR / "payroll_players.csv"
-PAYROLL_BY_POSITION_FILE = BASE_DIR / "payroll_by_position.csv"
-OD_SALARIES_FILE = BASE_DIR / "opening_day_salaries.csv"   # one row per rostered player
+PAYROLL_PLAYERS_FILE = PROCESSED_SALARY_DIR / "payroll_players.csv"
+PAYROLL_BY_POSITION_FILE = PROCESSED_SALARY_DIR / "payroll_by_position.csv"
+OD_SALARIES_FILE = PROCESSED_SALARY_DIR / "opening_day_salaries.csv"   # one row per rostered player
 
-MERGED_FILE = BASE_DIR / "merged_war_standings.csv"
-CORRELATION_FILE = BASE_DIR / "correlation_matrix.csv"
-HEATMAP_FILE = BASE_DIR / "correlation_heatmap.png"
-REGRESSION_TOTAL_FILE = BASE_DIR / "totalwar_wins_regression.txt"
-REGRESSION_POS_FILE = BASE_DIR / "war_wins_regression.txt"
+MERGED_FILE = PROCESSED_DIR / "merged_war_standings.csv"
+
+# results: regression output and summary numbers
+RESULTS_DIR = BASE_DIR / "results"
+CORRELATION_FILE = RESULTS_DIR / "correlation_matrix.csv"
+HEATMAP_FILE = RESULTS_DIR / "correlation_heatmap.png"   # quick-look version; the paper uses figures/fig05
+REGRESSION_TOTAL_FILE = RESULTS_DIR / "totalwar_wins_regression.txt"
+REGRESSION_POS_FILE = RESULTS_DIR / "war_wins_regression.txt"
 
 # Salary -> WAR -> wins (salary_analysis.py)
-SALARY_RESULTS_FILE = BASE_DIR / "salary_war_wins_results.txt"
-SALARY_SUMMARY_FILE = BASE_DIR / "salary_war_wins_summary.csv"
-PAYROLL_TO_WINS_FILE = BASE_DIR / "payroll_to_wins_table.csv"
+SALARY_RESULTS_FILE = RESULTS_DIR / "salary_war_wins_results.txt"
+SALARY_SUMMARY_FILE = RESULTS_DIR / "salary_war_wins_summary.csv"
+PAYROLL_TO_WINS_FILE = RESULTS_DIR / "payroll_to_wins_table.csv"
 
 # Paper figures and tables (figures.py)
 FIGURES_DIR = BASE_DIR / "figures"
 TABLES_DIR = BASE_DIR / "tables"
+
+# Make sure every output folder exists (e.g. in a fresh clone of the repository)
+for _folder in (CLEAN_STANDINGS_DIR, CLEAN_WAR_DIR, PROCESSED_SALARY_DIR,
+                RESULTS_DIR, FIGURES_DIR, TABLES_DIR):
+    _folder.mkdir(parents=True, exist_ok=True)
 
 # -----------------------------
 # Columns
