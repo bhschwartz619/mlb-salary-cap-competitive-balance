@@ -1,0 +1,413 @@
+SALARY -> WAR -> WINS
+Payroll in $M, 2026 dollars (scaled by league-average payroll growth).
+Robust (HC1) standard errors. Team fixed-effect dummies omitted from printouts.
+
+==============================================================================
+1a WAR ~ payroll
+                            OLS Regression Results                            
+==============================================================================
+Dep. Variable:               TotalWAR   R-squared:                       0.151
+Model:                            OLS   Adj. R-squared:                  0.149
+Method:                 Least Squares   F-statistic:                     60.19
+Date:                Fri, 13 Nov 2026   Prob (F-statistic):           1.10e-13
+Time:                        14:37:47   Log-Likelihood:                -1260.2
+No. Observations:                 330   AIC:                             2524.
+Df Residuals:                     328   BIC:                             2532.
+Df Model:                           1                                         
+Covariance Type:                  HC1                                         
+==============================================================================
+                 coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------
+Intercept     21.2386      1.738     12.222      0.000      17.833      24.644
+Payroll        0.0694      0.009      7.758      0.000       0.052       0.087
+==============================================================================
+Omnibus:                        0.947   Durbin-Watson:                   2.296
+Prob(Omnibus):                  0.623   Jarque-Bera (JB):                0.988
+Skew:                          -0.030   Prob(JB):                        0.610
+Kurtosis:                       2.739   Cond. No.                         519.
+==============================================================================
+
+Notes:
+[1] Standard Errors are heteroscedasticity robust (HC1)
+
+==============================================================================
+1b WAR ~ payroll + team fixed effects
+                            OLS Regression Results                            
+==============================================================================
+Dep. Variable:               TotalWAR   R-squared:                       0.407
+Model:                            OLS   Adj. R-squared:                  0.347
+Method:                 Least Squares   F-statistic:                     7.626
+Date:                Fri, 13 Nov 2026   Prob (F-statistic):           7.56e-23
+Time:                        14:37:47   Log-Likelihood:                -1201.1
+No. Observations:                 330   AIC:                             2464.
+Df Residuals:                     299   BIC:                             2582.
+Df Model:                          30                                         
+Covariance Type:                  HC1                                         
+====================================================================================================
+                                       coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------------------------
+Intercept                           22.1106      3.432      6.442      0.000      15.383      28.838
+Payroll                              0.0680      0.013      5.035      0.000       0.042       0.094
+==============================================================================
+Omnibus:                        2.527   Durbin-Watson:                   2.182
+Prob(Omnibus):                  0.283   Jarque-Bera (JB):                2.008
+Skew:                          -0.022   Prob(JB):                        0.366
+Kurtosis:                       2.620   Cond. No.                     5.71e+03
+==============================================================================
+
+Notes:
+[1] Standard Errors are heteroscedasticity robust (HC1)
+[2] The condition number is large, 5.71e+03. This might indicate that there are
+strong multicollinearity or other numerical problems.
+
+==============================================================================
+1c WAR ~ payroll + payroll^2 (diminishing returns?)
+                            OLS Regression Results                            
+==============================================================================
+Dep. Variable:               TotalWAR   R-squared:                       0.151
+Model:                            OLS   Adj. R-squared:                  0.146
+Method:                 Least Squares   F-statistic:                     30.04
+Date:                Fri, 13 Nov 2026   Prob (F-statistic):           1.05e-12
+Time:                        14:37:47   Log-Likelihood:                -1260.1
+No. Observations:                 330   AIC:                             2526.
+Df Residuals:                     327   BIC:                             2538.
+Df Model:                           2                                         
+Covariance Type:                  HC1                                         
+===================================================================================
+                      coef    std err          z      P>|z|      [0.025      0.975]
+-----------------------------------------------------------------------------------
+Intercept          22.1900      4.253      5.218      0.000      13.855      30.525
+Payroll             0.0580      0.047      1.242      0.214      -0.034       0.149
+I(Payroll ** 2)  2.985e-05      0.000      0.253      0.801      -0.000       0.000
+==============================================================================
+Omnibus:                        0.940   Durbin-Watson:                   2.293
+Prob(Omnibus):                  0.625   Jarque-Bera (JB):                0.983
+Skew:                          -0.031   Prob(JB):                        0.612
+Kurtosis:                       2.740   Cond. No.                     2.79e+05
+==============================================================================
+
+Notes:
+[1] Standard Errors are heteroscedasticity robust (HC1)
+[2] The condition number is large, 2.79e+05. This might indicate that there are
+strong multicollinearity or other numerical problems.
+
+==============================================================================
+2a Wins ~ payroll
+                            OLS Regression Results                            
+==============================================================================
+Dep. Variable:                      W   R-squared:                       0.130
+Model:                            OLS   Adj. R-squared:                  0.127
+Method:                 Least Squares   F-statistic:                     50.70
+Date:                Fri, 13 Nov 2026   Prob (F-statistic):           6.85e-12
+Time:                        14:37:47   Log-Likelihood:                -1284.1
+No. Observations:                 330   AIC:                             2572.
+Df Residuals:                     328   BIC:                             2580.
+Df Model:                           1                                         
+Covariance Type:                  HC1                                         
+==============================================================================
+                 coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------
+Intercept     69.0938      1.900     36.372      0.000      65.371      72.817
+Payroll        0.0683      0.010      7.120      0.000       0.050       0.087
+==============================================================================
+Omnibus:                        2.169   Durbin-Watson:                   2.334
+Prob(Omnibus):                  0.338   Jarque-Bera (JB):                2.164
+Skew:                          -0.196   Prob(JB):                        0.339
+Kurtosis:                       2.940   Cond. No.                         519.
+==============================================================================
+
+Notes:
+[1] Standard Errors are heteroscedasticity robust (HC1)
+
+==============================================================================
+2b Wins ~ payroll + WAR
+                            OLS Regression Results                            
+==============================================================================
+Dep. Variable:                      W   R-squared:                       0.856
+Model:                            OLS   Adj. R-squared:                  0.855
+Method:                 Least Squares   F-statistic:                     813.8
+Date:                Fri, 13 Nov 2026   Prob (F-statistic):          1.10e-127
+Time:                        14:37:47   Log-Likelihood:                -987.84
+No. Observations:                 330   AIC:                             1982.
+Df Residuals:                     327   BIC:                             1993.
+Df Model:                           2                                         
+Covariance Type:                  HC1                                         
+==============================================================================
+                 coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------
+Intercept     48.2387      0.987     48.878      0.000      46.304      50.173
+Payroll        0.0002      0.004      0.043      0.966      -0.008       0.008
+TotalWAR       0.9819      0.026     37.469      0.000       0.931       1.033
+==============================================================================
+Omnibus:                        1.069   Durbin-Watson:                   1.997
+Prob(Omnibus):                  0.586   Jarque-Bera (JB):                0.815
+Skew:                           0.073   Prob(JB):                        0.665
+Kurtosis:                       3.195   Cond. No.                         641.
+==============================================================================
+
+Notes:
+[1] Standard Errors are heteroscedasticity robust (HC1)
+
+==============================================================================
+2c Wins ~ WAR
+                            OLS Regression Results                            
+==============================================================================
+Dep. Variable:                      W   R-squared:                       0.856
+Model:                            OLS   Adj. R-squared:                  0.855
+Method:                 Least Squares   F-statistic:                     1631.
+Date:                Fri, 13 Nov 2026   Prob (F-statistic):          2.51e-129
+Time:                        14:37:47   Log-Likelihood:                -987.84
+No. Observations:                 330   AIC:                             1980.
+Df Residuals:                     328   BIC:                             1987.
+Df Model:                           1                                         
+Covariance Type:                  HC1                                         
+==============================================================================
+                 coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------
+Intercept     48.2566      0.892     54.071      0.000      46.507      50.006
+TotalWAR       0.9823      0.024     40.383      0.000       0.935       1.030
+==============================================================================
+Omnibus:                        1.050   Durbin-Watson:                   1.997
+Prob(Omnibus):                  0.592   Jarque-Bera (JB):                0.796
+Skew:                           0.072   Prob(JB):                        0.672
+Kurtosis:                       3.192   Cond. No.                         105.
+==============================================================================
+
+Notes:
+[1] Standard Errors are heteroscedasticity robust (HC1)
+
+==============================================================================
+3a WAR ~ hitter pay + pitcher pay
+                            OLS Regression Results                            
+==============================================================================
+Dep. Variable:               TotalWAR   R-squared:                       0.159
+Model:                            OLS   Adj. R-squared:                  0.154
+Method:                 Least Squares   F-statistic:                     31.51
+Date:                Fri, 13 Nov 2026   Prob (F-statistic):           3.05e-13
+Time:                        14:37:47   Log-Likelihood:                -1258.6
+No. Observations:                 330   AIC:                             2523.
+Df Residuals:                     327   BIC:                             2535.
+Df Model:                           2                                         
+Covariance Type:                  HC1                                         
+==============================================================================
+                 coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------
+Intercept     21.7036      1.689     12.853      0.000      18.394      25.013
+Hit_Pay        0.0393      0.018      2.145      0.032       0.003       0.075
+Pit_Pay        0.1025      0.021      4.927      0.000       0.062       0.143
+==============================================================================
+Omnibus:                        1.242   Durbin-Watson:                   2.300
+Prob(Omnibus):                  0.538   Jarque-Bera (JB):                1.220
+Skew:                          -0.045   Prob(JB):                        0.543
+Kurtosis:                       2.716   Cond. No.                         355.
+==============================================================================
+
+Notes:
+[1] Standard Errors are heteroscedasticity robust (HC1)
+
+==============================================================================
+3b WAR ~ hitter pay + SP pay + RP pay
+                            OLS Regression Results                            
+==============================================================================
+Dep. Variable:               TotalWAR   R-squared:                       0.161
+Model:                            OLS   Adj. R-squared:                  0.154
+Method:                 Least Squares   F-statistic:                     21.10
+Date:                Fri, 13 Nov 2026   Prob (F-statistic):           1.62e-12
+Time:                        14:37:47   Log-Likelihood:                -1258.2
+No. Observations:                 330   AIC:                             2524.
+Df Residuals:                     326   BIC:                             2540.
+Df Model:                           3                                         
+Covariance Type:                  HC1                                         
+==============================================================================
+                 coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------
+Intercept     21.2424      1.773     11.982      0.000      17.768      24.717
+Hit_Pay        0.0359      0.019      1.939      0.053      -0.000       0.072
+SP_Pay         0.0920      0.024      3.863      0.000       0.045       0.139
+RP_Pay         0.1517      0.056      2.714      0.007       0.042       0.261
+==============================================================================
+Omnibus:                        1.444   Durbin-Watson:                   2.307
+Prob(Omnibus):                  0.486   Jarque-Bera (JB):                1.384
+Skew:                          -0.059   Prob(JB):                        0.500
+Kurtosis:                       2.706   Cond. No.                         334.
+==============================================================================
+
+Notes:
+[1] Standard Errors are heteroscedasticity robust (HC1)
+
+==============================================================================
+3c Catcher WAR ~ Catcher pay
+                            OLS Regression Results                            
+==============================================================================
+Dep. Variable:            Catcher_WAR   R-squared:                       0.028
+Model:                            OLS   Adj. R-squared:                  0.025
+Method:                 Least Squares   F-statistic:                     9.209
+Date:                Fri, 13 Nov 2026   Prob (F-statistic):            0.00260
+Time:                        14:37:47   Log-Likelihood:                -590.71
+No. Observations:                 330   AIC:                             1185.
+Df Residuals:                     328   BIC:                             1193.
+Df Model:                           1                                         
+Covariance Type:                  HC1                                         
+===============================================================================
+                  coef    std err          z      P>|z|      [0.025      0.975]
+-------------------------------------------------------------------------------
+Intercept       1.3356      0.126     10.563      0.000       1.088       1.583
+Catcher_Pay     0.0345      0.011      3.035      0.002       0.012       0.057
+==============================================================================
+Omnibus:                        0.048   Durbin-Watson:                   2.055
+Prob(Omnibus):                  0.976   Jarque-Bera (JB):                0.135
+Skew:                           0.016   Prob(JB):                        0.935
+Kurtosis:                       2.906   Cond. No.                         18.2
+==============================================================================
+
+Notes:
+[1] Standard Errors are heteroscedasticity robust (HC1)
+
+==============================================================================
+3c Infield WAR ~ Infield pay
+                            OLS Regression Results                            
+==============================================================================
+Dep. Variable:            Infield_WAR   R-squared:                       0.020
+Model:                            OLS   Adj. R-squared:                  0.017
+Method:                 Least Squares   F-statistic:                     6.426
+Date:                Fri, 13 Nov 2026   Prob (F-statistic):             0.0117
+Time:                        14:37:47   Log-Likelihood:                -986.09
+No. Observations:                 330   AIC:                             1976.
+Df Residuals:                     328   BIC:                             1984.
+Df Model:                           1                                         
+Covariance Type:                  HC1                                         
+===============================================================================
+                  coef    std err          z      P>|z|      [0.025      0.975]
+-------------------------------------------------------------------------------
+Intercept       8.2890      0.611     13.574      0.000       7.092       9.486
+Infield_Pay     0.0302      0.012      2.535      0.011       0.007       0.054
+==============================================================================
+Omnibus:                        1.331   Durbin-Watson:                   2.175
+Prob(Omnibus):                  0.514   Jarque-Bera (JB):                1.388
+Skew:                           0.150   Prob(JB):                        0.500
+Kurtosis:                       2.896   Cond. No.                         113.
+==============================================================================
+
+Notes:
+[1] Standard Errors are heteroscedasticity robust (HC1)
+
+==============================================================================
+3c Outfield WAR ~ Outfield pay
+                            OLS Regression Results                            
+==============================================================================
+Dep. Variable:           Outfield_WAR   R-squared:                       0.053
+Model:                            OLS   Adj. R-squared:                  0.050
+Method:                 Least Squares   F-statistic:                     15.69
+Date:                Fri, 13 Nov 2026   Prob (F-statistic):           9.17e-05
+Time:                        14:37:47   Log-Likelihood:                -911.86
+No. Observations:                 330   AIC:                             1828.
+Df Residuals:                     328   BIC:                             1835.
+Df Model:                           1                                         
+Covariance Type:                  HC1                                         
+================================================================================
+                   coef    std err          z      P>|z|      [0.025      0.975]
+--------------------------------------------------------------------------------
+Intercept        5.0009      0.377     13.267      0.000       4.262       5.740
+Outfield_Pay     0.0441      0.011      3.961      0.000       0.022       0.066
+==============================================================================
+Omnibus:                       12.068   Durbin-Watson:                   1.999
+Prob(Omnibus):                  0.002   Jarque-Bera (JB):               12.360
+Skew:                           0.460   Prob(JB):                      0.00207
+Kurtosis:                       3.226   Cond. No.                         67.0
+==============================================================================
+
+Notes:
+[1] Standard Errors are heteroscedasticity robust (HC1)
+
+==============================================================================
+3c DH WAR ~ DH pay
+                            OLS Regression Results                            
+==============================================================================
+Dep. Variable:                 DH_WAR   R-squared:                       0.110
+Model:                            OLS   Adj. R-squared:                  0.107
+Method:                 Least Squares   F-statistic:                     20.68
+Date:                Fri, 13 Nov 2026   Prob (F-statistic):           7.63e-06
+Time:                        14:37:47   Log-Likelihood:                -580.53
+No. Observations:                 330   AIC:                             1165.
+Df Residuals:                     328   BIC:                             1173.
+Df Model:                           1                                         
+Covariance Type:                  HC1                                         
+==============================================================================
+                 coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------
+Intercept      1.0369      0.083     12.467      0.000       0.874       1.200
+DH_Pay         0.0472      0.010      4.548      0.000       0.027       0.068
+==============================================================================
+Omnibus:                       45.639   Durbin-Watson:                   1.934
+Prob(Omnibus):                  0.000   Jarque-Bera (JB):               71.298
+Skew:                           0.846   Prob(JB):                     3.29e-16
+Kurtosis:                       4.523   Cond. No.                         14.5
+==============================================================================
+
+Notes:
+[1] Standard Errors are heteroscedasticity robust (HC1)
+
+==============================================================================
+3c Starters WAR ~ Starters pay
+                            OLS Regression Results                            
+==============================================================================
+Dep. Variable:           Starters_WAR   R-squared:                       0.057
+Model:                            OLS   Adj. R-squared:                  0.054
+Method:                 Least Squares   F-statistic:                     17.80
+Date:                Fri, 13 Nov 2026   Prob (F-statistic):           3.18e-05
+Time:                        14:37:47   Log-Likelihood:                -994.79
+No. Observations:                 330   AIC:                             1994.
+Df Residuals:                     328   BIC:                             2001.
+Df Model:                           1                                         
+Covariance Type:                  HC1                                         
+================================================================================
+                   coef    std err          z      P>|z|      [0.025      0.975]
+--------------------------------------------------------------------------------
+Intercept        7.3178      0.544     13.451      0.000       6.251       8.384
+Starters_Pay     0.0400      0.009      4.219      0.000       0.021       0.059
+==============================================================================
+Omnibus:                        2.378   Durbin-Watson:                   2.010
+Prob(Omnibus):                  0.305   Jarque-Bera (JB):                2.347
+Skew:                           0.205   Prob(JB):                        0.309
+Kurtosis:                       2.957   Cond. No.                         118.
+==============================================================================
+
+Notes:
+[1] Standard Errors are heteroscedasticity robust (HC1)
+
+==============================================================================
+3c Relievers WAR ~ Relievers pay
+                            OLS Regression Results                            
+==============================================================================
+Dep. Variable:          Relievers_WAR   R-squared:                       0.007
+Model:                            OLS   Adj. R-squared:                  0.004
+Method:                 Least Squares   F-statistic:                     2.258
+Date:                Fri, 13 Nov 2026   Prob (F-statistic):              0.134
+Time:                        14:37:47   Log-Likelihood:                -840.65
+No. Observations:                 330   AIC:                             1685.
+Df Residuals:                     328   BIC:                             1693.
+Df Model:                           1                                         
+Covariance Type:                  HC1                                         
+=================================================================================
+                    coef    std err          z      P>|z|      [0.025      0.975]
+---------------------------------------------------------------------------------
+Intercept         3.7423      0.395      9.476      0.000       2.968       4.516
+Relievers_Pay     0.0207      0.014      1.503      0.133      -0.006       0.048
+==============================================================================
+Omnibus:                        3.877   Durbin-Watson:                   2.184
+Prob(Omnibus):                  0.144   Jarque-Bera (JB):                3.580
+Skew:                          -0.235   Prob(JB):                        0.167
+Kurtosis:                       3.200   Cond. No.                         69.9
+==============================================================================
+
+Notes:
+[1] Standard Errors are heteroscedasticity robust (HC1)
+
+==============================================================================
+Test: hitter pay and pitcher pay buy the same WAR per $1M
+                             Test for Constraints                             
+==============================================================================
+                 coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------
+c0            -0.0631      0.035     -1.811      0.070      -0.132       0.005
+==============================================================================
