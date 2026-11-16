@@ -10,6 +10,7 @@ import merge
 import analysis
 import salary_analysis
 import figures
+import balance_metrics
 
 
 def main():
@@ -30,6 +31,9 @@ def main():
 
     print("\n########## STEP 5: FIGURES & TABLES ##########")
     figures.main()
+
+    print("\n########## STEP 6: COMPETITIVE BALANCE ##########")
+    balance_metrics.main()
 
     print("\nDone.")
 
