@@ -60,6 +60,28 @@ SEASONS_SIMULATED = 2000
 GAMES = 162
 RNG_SEED = 20261116
 
+
+# Division alignment, stable across 2015-2026. Needed because playoff berths go
+# to division winners plus wild cards, not simply to the best records overall.
+DIVISIONS = {
+    "AL East": ["Baltimore Orioles", "Boston Red Sox", "New York Yankees",
+                "Tampa Bay Rays", "Toronto Blue Jays"],
+    "AL Central": ["Chicago White Sox", "Cleveland Guardians", "Detroit Tigers",
+                   "Kansas City Royals", "Minnesota Twins"],
+    "AL West": ["Houston Astros", "Los Angeles Angels", "Oakland Athletics",
+                "Seattle Mariners", "Texas Rangers"],
+    "NL East": ["Atlanta Braves", "Miami Marlins", "New York Mets",
+                "Philadelphia Phillies", "Washington Nationals"],
+    "NL Central": ["Chicago Cubs", "Cincinnati Reds", "Milwaukee Brewers",
+                   "Pittsburgh Pirates", "St. Louis Cardinals"],
+    "NL West": ["Arizona Diamondbacks", "Colorado Rockies", "Los Angeles Dodgers",
+                "San Diego Padres", "San Francisco Giants"],
+}
+TEAM_DIVISION = {t: d for d, teams in DIVISIONS.items() for t in teams}
+
+# Wild cards per league: two through 2021, three from 2022.
+WILDCARDS_BY_SEASON = {2019: 2, 2021: 2, 2022: 3, 2023: 3, 2024: 3, 2025: 3, 2026: 3}
+
 SIMULATION_FILE = config.RESULTS_DIR / "simulation_results.csv"
 CLEARING_FILE = config.RESULTS_DIR / "simulation_clearing.csv"
 
@@ -161,6 +183,48 @@ def balance_of(draws):
     }
 
 
+
+def playoff_berths(draws, divisions, leagues, n_wildcards, rng):
+    """Which clubs qualify in each simulated season.
+
+    Division winners first, then the best remaining records in each league fill
+    the wild cards — the actual rule, rather than simply taking the best records
+    in the league, which would overstate access for clubs in weak divisions.
+    """
+    n_draws, n_teams = draws.shape
+    # A tiny jitter breaks ties the way a tiebreaker game would, without
+    # favouring whichever club happens to sit first in the frame.
+    jittered = draws + rng.random((n_draws, n_teams)) * 0.5
+    qualified = np.zeros((n_draws, n_teams), dtype=bool)
+
+    for division in np.unique(divisions):
+        cols = np.flatnonzero(divisions == division)
+        winner = cols[np.argmax(jittered[:, cols], axis=1)]
+        qualified[np.arange(n_draws), winner] = True
+
+    for league in np.unique(leagues):
+        cols = np.flatnonzero(leagues == league)
+        scores = np.where(qualified[:, cols], -np.inf, jittered[:, cols])
+        # argsort descending, take the top n_wildcards still unqualified
+        order = np.argsort(-scores, axis=1)[:, :n_wildcards]
+        for slot in range(n_wildcards):
+            picked = cols[order[:, slot]]
+            qualified[np.arange(n_draws), picked] = True
+
+    return qualified
+
+
+def playoff_access(qualified, quartiles):
+    """Share of simulated seasons in which a club of each payroll quartile
+    qualifies. Quartiles are the club's STATUS QUO payroll rank, so the question
+    is whether a rule helps the clubs that were previously disadvantaged."""
+    out = {}
+    for q in (1, 2, 3, 4):
+        cols = np.flatnonzero(quartiles == q)
+        out[q] = float(qualified[:, cols].mean()) if len(cols) else np.nan
+    return out
+
+
 def main():
     merged = pd.read_csv(config.MERGED_FILE)
     cbt = balance_metrics.load_cbt()
@@ -169,6 +233,10 @@ def main():
         return
 
     df = merged.merge(cbt, on=["Year", "Team"], how="inner")
+    # Status quo payroll quartile, within season, fixed across scenarios.
+    df["Payroll_Quartile"] = (df.groupby("Year")["CBT_Payroll"]
+                              .transform(lambda s: pd.qcut(s, 4, labels=[1, 2, 3, 4]))
+                              .astype(int))
     intercept, slope = win_model(merged)
     rng = np.random.default_rng(RNG_SEED)
 
@@ -183,8 +251,17 @@ def main():
             for year, season in df.groupby("Year"):
                 sim, clearing = redistribute(season, cap_m, floor_m, price)
                 draws = simulate_wins(sim["Sim_WAR"].values, intercept, slope, rng)
+                divisions = season["Team"].map(TEAM_DIVISION).values
+                leagues = np.array([d[:2] for d in divisions])
+                qualified = playoff_berths(
+                    draws, divisions, leagues,
+                    WILDCARDS_BY_SEASON.get(int(year), 3), rng)
+                access = playoff_access(qualified, season["Payroll_Quartile"].values)
+
                 row = {"Price_M_per_WAR": price, "Scenario": name, "Year": year}
                 row.update(balance_of(draws))
+                row.update({f"Playoff_Rate_Q{q}": v for q, v in access.items()})
+                row["Playoff_Gap_Q4_Q1"] = access[4] - access[1]
                 results.append(row)
                 clearings.append({"Price_M_per_WAR": price, "Scenario": name,
                                   "Year": year, **clearing})
@@ -216,6 +293,21 @@ def main():
                    f"   UNMET {r.Unmet_Demand_WAR:5.1f} WAR = ${r.Inflation_Only_M:6.0f}M inflation"
             print(f"   {int(r.Year)}   released {r.WAR_Released:5.1f}   "
                   f"demanded {r.WAR_Demanded:5.1f}{flag}")
+
+    print(f"\nPlayoff rate by status-quo payroll quartile (at ${PRICES_M[1]:.1f}M/WAR)")
+    mid_res = results[results["Price_M_per_WAR"] == PRICES_M[1]]
+    access_tbl = (mid_res.groupby("Scenario")[
+        ["Playoff_Rate_Q1", "Playoff_Rate_Q2", "Playoff_Rate_Q3",
+         "Playoff_Rate_Q4", "Playoff_Gap_Q4_Q1"]]
+        .mean().reindex(SCENARIOS.keys()))
+    access_tbl.columns = ["Q1 (low)", "Q2", "Q3", "Q4 (high)", "Q4 - Q1"]
+    print(access_tbl.round(3).to_string())
+
+    print("\nQ4 - Q1 playoff gap by price (does the result survive the price?)")
+    gap = (results.pivot_table(index="Scenario", columns="Price_M_per_WAR",
+                               values="Playoff_Gap_Q4_Q1", aggfunc="mean")
+           .reindex(SCENARIOS.keys()))
+    print(gap.round(3).to_string())
 
     results.to_csv(SIMULATION_FILE, index=False)
     clearings.to_csv(CLEARING_FILE, index=False)
