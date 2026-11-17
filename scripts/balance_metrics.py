@@ -16,12 +16,12 @@ Three jobs, all from files the pipeline already produces or that live in data/ra
 2. Who a cap and floor would bind. Counts teams above the cap and below the
    floor in a given season, and the dollars each side would move.
 
-   Caveat worth keeping in the methods section: MLB's proposed thresholds are
-   defined on CBT payroll (AAV over the 40-man roster plus benefits), which
-   runs 12-20% above Opening Day payroll and varies by team with contract
-   structure. Until CBT payroll is parsed from Cot's sheets, this reports the
-   OD-basis count plus two scaled approximations, so the sensitivity is visible
-   rather than hidden.
+   Reported on both payroll bases, because they give different answers and the
+   difference matters. Opening Day payroll covers all 330 team-seasons. CBT
+   payroll — what a real cap or floor would be assessed on — covers 2019 onward,
+   and comes from clean_cbt.py. The two are not a fixed multiple of each other
+   (the ratio runs 0.98 to 1.74), so the clubs nearest a threshold are exactly
+   the ones a scaled approximation would misclassify.
 
 3. Dynamic balance, from playoff appearances. Within-season spread can stay
    flat while the same clubs monopolize October, and only these measures catch
@@ -39,9 +39,10 @@ import team_names
 CAP_M = 245.3
 FLOOR_M = 171.2
 
-# CBT payroll runs above Opening Day payroll. Until it is parsed, the binding
-# counts are reported on the OD basis and at these two scalings of it.
-CBT_SCALINGS = (1.00, 1.12, 1.20)
+# Payroll bases the binding counts are reported on. Opening Day covers every
+# season; CBT covers 2019 onward (earlier Cot's sheets have no CBT row) and is
+# the basis a real cap or floor would be assessed on.
+CBT_FILE = config.PROCESSED_SALARY_DIR / "cbt_payroll.csv"
 
 # Rolling window, in seasons, for "how many different clubs reached October".
 WINDOW = 3
@@ -98,18 +99,30 @@ def balance_by_season(df):
     return pd.DataFrame(rows)
 
 
-def cap_floor_binding(df, cap_m=CAP_M, floor_m=FLOOR_M, scalings=CBT_SCALINGS):
-    """For each season and each payroll basis: who binds, and by how much."""
+def load_cbt():
+    """CBT payroll by team-season, or None if clean_cbt.py has not run."""
+    if not CBT_FILE.exists():
+        return None
+    return pd.read_csv(CBT_FILE)
+
+
+def cap_floor_binding(df, cbt=None, cap_m=CAP_M, floor_m=FLOOR_M):
+    """For each season and payroll basis: who binds, and by how much."""
+    bases = [("Opening Day", df[["Year", "Team", "Cots_OD_Payroll"]]
+              .rename(columns={"Cots_OD_Payroll": "Payroll"}))]
+    if cbt is not None:
+        bases.append(("CBT", cbt.rename(columns={"CBT_Payroll": "Payroll"})))
+
     rows = []
-    for year, season in df.groupby("Year"):
-        for scaling in scalings:
-            payroll = season["Cots_OD_Payroll"] / 1e6 * scaling
+    for basis, table in bases:
+        for year, season in table.groupby("Year"):
+            payroll = season["Payroll"] / 1e6
             over = payroll > cap_m
             under = payroll < floor_m
             rows.append({
                 "Year": year,
-                "Basis": "Opening Day" if scaling == 1.0 else f"OD x{scaling:.2f}",
-                "Scaling": scaling,
+                "Basis": basis,
+                "Teams": len(season),
                 "Teams_Over_Cap": int(over.sum()),
                 "Teams_Below_Floor": int(under.sum()),
                 "Teams_Unaffected": int((~over & ~under).sum()),
@@ -217,13 +230,16 @@ def report(balance, binding, concentration, by_payroll, latest_year, df):
     for column in ["NollScully", "SD_Wins", "Gini_Wins", "Gini_Payroll", "Payroll_CV"]:
         print(f"   {column:14} r = {np.corrcoef(balance.Year, balance[column])[0, 1]:+.2f}")
 
-    print(f"\nWho a ${CAP_M:.1f}M cap / ${FLOOR_M:.1f}M floor would bind in {latest_year}")
-    latest = binding[binding.Year == latest_year]
-    for _, row in latest.iterrows():
-        print(f"   {row.Basis:14}  over cap: {row.Teams_Over_Cap:2d}   "
-              f"below floor: {row.Teams_Below_Floor:2d}   "
-              f"cut ${row.Dollars_Cut_M:6.1f}M   add ${row.Dollars_Added_M:6.1f}M   "
-              f"net {row.Net_Change_M:+7.1f}M")
+    print(f"\nWho a ${CAP_M:.1f}M cap / ${FLOOR_M:.1f}M floor would bind")
+    for basis in binding.Basis.unique():
+        print(f"   --- {basis} payroll ---")
+        for _, row in binding[binding.Basis == basis].iterrows():
+            print(f"   {int(row.Year)}   over cap: {row.Teams_Over_Cap:2d}   "
+                  f"below floor: {row.Teams_Below_Floor:2d}   "
+                  f"cut ${row.Dollars_Cut_M:6.1f}M   add ${row.Dollars_Added_M:6.1f}M   "
+                  f"net {row.Net_Change_M:+7.1f}M")
+    if "CBT" not in binding.Basis.values:
+        print("   (CBT basis unavailable — run clean_cbt.py first)")
 
     if concentration is None:
         print(f"\nDynamic balance skipped: {RAW_PLAYOFFS_FILE} not found.")
@@ -254,7 +270,7 @@ def main():
     df["WinPct"] = df["W"] / df["G"]
 
     balance = balance_by_season(df)
-    binding = cap_floor_binding(df)
+    binding = cap_floor_binding(df, load_cbt())
 
     playoffs = load_playoffs(df)
     concentration = playoff_concentration(playoffs, df) if playoffs is not None else None
