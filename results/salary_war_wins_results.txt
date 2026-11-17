@@ -10,7 +10,7 @@ Dep. Variable:               TotalWAR   R-squared:                       0.151
 Model:                            OLS   Adj. R-squared:                  0.149
 Method:                 Least Squares   F-statistic:                     60.19
 Date:                Mon, 16 Nov 2026   Prob (F-statistic):           1.10e-13
-Time:                        17:18:31   Log-Likelihood:                -1260.2
+Time:                        18:09:52   Log-Likelihood:                -1260.2
 No. Observations:                 330   AIC:                             2524.
 Df Residuals:                     328   BIC:                             2532.
 Df Model:                           1                                         
@@ -38,7 +38,7 @@ Dep. Variable:               TotalWAR   R-squared:                       0.407
 Model:                            OLS   Adj. R-squared:                  0.347
 Method:                 Least Squares   F-statistic:                     7.626
 Date:                Mon, 16 Nov 2026   Prob (F-statistic):           7.56e-23
-Time:                        17:18:31   Log-Likelihood:                -1201.1
+Time:                        18:09:52   Log-Likelihood:                -1201.1
 No. Observations:                 330   AIC:                             2464.
 Df Residuals:                     299   BIC:                             2582.
 Df Model:                          30                                         
@@ -68,7 +68,7 @@ Dep. Variable:               TotalWAR   R-squared:                       0.151
 Model:                            OLS   Adj. R-squared:                  0.146
 Method:                 Least Squares   F-statistic:                     30.04
 Date:                Mon, 16 Nov 2026   Prob (F-statistic):           1.05e-12
-Time:                        17:18:31   Log-Likelihood:                -1260.1
+Time:                        18:09:52   Log-Likelihood:                -1260.1
 No. Observations:                 330   AIC:                             2526.
 Df Residuals:                     327   BIC:                             2538.
 Df Model:                           2                                         
@@ -99,7 +99,7 @@ Dep. Variable:                      W   R-squared:                       0.130
 Model:                            OLS   Adj. R-squared:                  0.127
 Method:                 Least Squares   F-statistic:                     50.70
 Date:                Mon, 16 Nov 2026   Prob (F-statistic):           6.85e-12
-Time:                        17:18:31   Log-Likelihood:                -1284.1
+Time:                        18:09:52   Log-Likelihood:                -1284.1
 No. Observations:                 330   AIC:                             2572.
 Df Residuals:                     328   BIC:                             2580.
 Df Model:                           1                                         
@@ -127,7 +127,7 @@ Dep. Variable:                      W   R-squared:                       0.856
 Model:                            OLS   Adj. R-squared:                  0.855
 Method:                 Least Squares   F-statistic:                     813.8
 Date:                Mon, 16 Nov 2026   Prob (F-statistic):          1.10e-127
-Time:                        17:18:31   Log-Likelihood:                -987.84
+Time:                        18:09:52   Log-Likelihood:                -987.84
 No. Observations:                 330   AIC:                             1982.
 Df Residuals:                     327   BIC:                             1993.
 Df Model:                           2                                         
@@ -156,7 +156,7 @@ Dep. Variable:                      W   R-squared:                       0.856
 Model:                            OLS   Adj. R-squared:                  0.855
 Method:                 Least Squares   F-statistic:                     1631.
 Date:                Mon, 16 Nov 2026   Prob (F-statistic):          2.51e-129
-Time:                        17:18:31   Log-Likelihood:                -987.84
+Time:                        18:09:52   Log-Likelihood:                -987.84
 No. Observations:                 330   AIC:                             1980.
 Df Residuals:                     328   BIC:                             1987.
 Df Model:                           1                                         
@@ -184,7 +184,7 @@ Dep. Variable:               TotalWAR   R-squared:                       0.159
 Model:                            OLS   Adj. R-squared:                  0.154
 Method:                 Least Squares   F-statistic:                     31.51
 Date:                Mon, 16 Nov 2026   Prob (F-statistic):           3.05e-13
-Time:                        17:18:31   Log-Likelihood:                -1258.6
+Time:                        18:09:52   Log-Likelihood:                -1258.6
 No. Observations:                 330   AIC:                             2523.
 Df Residuals:                     327   BIC:                             2535.
 Df Model:                           2                                         
@@ -213,7 +213,7 @@ Dep. Variable:               TotalWAR   R-squared:                       0.161
 Model:                            OLS   Adj. R-squared:                  0.154
 Method:                 Least Squares   F-statistic:                     21.10
 Date:                Mon, 16 Nov 2026   Prob (F-statistic):           1.62e-12
-Time:                        17:18:31   Log-Likelihood:                -1258.2
+Time:                        18:09:52   Log-Likelihood:                -1258.2
 No. Observations:                 330   AIC:                             2524.
 Df Residuals:                     326   BIC:                             2540.
 Df Model:                           3                                         
@@ -243,7 +243,7 @@ Dep. Variable:            Catcher_WAR   R-squared:                       0.028
 Model:                            OLS   Adj. R-squared:                  0.025
 Method:                 Least Squares   F-statistic:                     9.209
 Date:                Mon, 16 Nov 2026   Prob (F-statistic):            0.00260
-Time:                        17:18:31   Log-Likelihood:                -590.71
+Time:                        18:09:52   Log-Likelihood:                -590.71
 No. Observations:                 330   AIC:                             1185.
 Df Residuals:                     328   BIC:                             1193.
 Df Model:                           1                                         
@@ -271,7 +271,7 @@ Dep. Variable:            Infield_WAR   R-squared:                       0.020
 Model:                            OLS   Adj. R-squared:                  0.017
 Method:                 Least Squares   F-statistic:                     6.426
 Date:                Mon, 16 Nov 2026   Prob (F-statistic):             0.0117
-Time:                        17:18:31   Log-Likelihood:                -986.09
+Time:                        18:09:52   Log-Likelihood:                -986.09
 No. Observations:                 330   AIC:                             1976.
 Df Residuals:                     328   BIC:                             1984.
 Df Model:                           1                                         
@@ -299,7 +299,7 @@ Dep. Variable:           Outfield_WAR   R-squared:                       0.053
 Model:                            OLS   Adj. R-squared:                  0.050
 Method:                 Least Squares   F-statistic:                     15.69
 Date:                Mon, 16 Nov 2026   Prob (F-statistic):           9.17e-05
-Time:                        17:18:31   Log-Likelihood:                -911.86
+Time:                        18:09:52   Log-Likelihood:                -911.86
 No. Observations:                 330   AIC:                             1828.
 Df Residuals:                     328   BIC:                             1835.
 Df Model:                           1                                         
@@ -327,7 +327,7 @@ Dep. Variable:                 DH_WAR   R-squared:                       0.110
 Model:                            OLS   Adj. R-squared:                  0.107
 Method:                 Least Squares   F-statistic:                     20.68
 Date:                Mon, 16 Nov 2026   Prob (F-statistic):           7.63e-06
-Time:                        17:18:31   Log-Likelihood:                -580.53
+Time:                        18:09:52   Log-Likelihood:                -580.53
 No. Observations:                 330   AIC:                             1165.
 Df Residuals:                     328   BIC:                             1173.
 Df Model:                           1                                         
@@ -355,7 +355,7 @@ Dep. Variable:           Starters_WAR   R-squared:                       0.057
 Model:                            OLS   Adj. R-squared:                  0.054
 Method:                 Least Squares   F-statistic:                     17.80
 Date:                Mon, 16 Nov 2026   Prob (F-statistic):           3.18e-05
-Time:                        17:18:31   Log-Likelihood:                -994.79
+Time:                        18:09:52   Log-Likelihood:                -994.79
 No. Observations:                 330   AIC:                             1994.
 Df Residuals:                     328   BIC:                             2001.
 Df Model:                           1                                         
@@ -383,7 +383,7 @@ Dep. Variable:          Relievers_WAR   R-squared:                       0.007
 Model:                            OLS   Adj. R-squared:                  0.004
 Method:                 Least Squares   F-statistic:                     2.258
 Date:                Mon, 16 Nov 2026   Prob (F-statistic):              0.134
-Time:                        17:18:31   Log-Likelihood:                -840.65
+Time:                        18:09:52   Log-Likelihood:                -840.65
 No. Observations:                 330   AIC:                             1685.
 Df Residuals:                     328   BIC:                             1693.
 Df Model:                           1                                         
