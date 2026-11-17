@@ -11,6 +11,8 @@ import analysis
 import salary_analysis
 import figures
 import balance_metrics
+import clean_cbt
+import simulate
 
 
 def main():
@@ -19,6 +21,9 @@ def main():
 
     print("\n########## STEP 1b: CLEAN PAYROLL ##########")
     clean_payroll.main()
+
+    print("\n########## STEP 1c: CBT PAYROLL ##########")
+    clean_cbt.main()
 
     print("\n########## STEP 2: MERGE ##########")
     merge.main()
@@ -34,6 +39,9 @@ def main():
 
     print("\n########## STEP 6: COMPETITIVE BALANCE ##########")
     balance_metrics.main()
+
+    print("\n########## STEP 7: SIMULATION ##########")
+    simulate.main()
 
     print("\nDone.")
 
