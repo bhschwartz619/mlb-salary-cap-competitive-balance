@@ -17,6 +17,7 @@ import matplotlib.pyplot as plt
 import config
 import figures as base          # shared style, colors, save()
 import simulate
+import team_names
 import thresholds
 
 BLUE, ORANGE, AQUA = base.BLUE, base.ORANGE, base.AQUA
@@ -291,14 +292,88 @@ def fig_robustness(res):
          f"{SOURCE}")
 
 
+# ------------------------------------------------------------------ table
+TABLE_FILE = config.TABLES_DIR / "table4_simulation_results.csv"
+TABLE_NOTE = []
+
+
+def actual_row(teams, balance):
+    """Actual 2019-2026 MLB, measured the same way as the simulated rows:
+    Noll-Scully and SD of wins averaged over seasons, playoff rates by each
+    club's CBT payroll quartile within its season."""
+    sq = pick(teams, Scenario="Status quo")[["Year", "Team", "Payroll_Quartile"]]
+    playoffs = pd.read_csv(config.RAW_DIR / "playoffs" / "playoffs.csv")
+    playoffs["Team"] = playoffs["Team"].apply(team_names.normalize_team_name)
+    made = set(zip(playoffs["Year"], playoffs["Team"]))
+    sq = sq.assign(Playoffs=[(y, t) in made for y, t in zip(sq["Year"], sq["Team"])])
+    rates = sq.groupby("Payroll_Quartile")["Playoffs"].mean()
+    seasons = balance[balance["Year"].isin(sq["Year"].unique())]
+    row = {"NollScully": seasons["NollScully"].mean(), "SD_Wins": seasons["SD_Wins"].mean()}
+    row.update({f"Playoff_Rate_Q{q}": rates[q] for q in range(1, 5)})
+    row["Playoff_Gap_Q4_Q1"] = rates[4] - rates[1]
+    return row
+
+
+def table_results(res, teams, balance):
+    """Table 4: balance and playoff access under each rule (main specification),
+    with the actual 2019-2026 league for comparison."""
+    measures = ["NollScully", "SD_Wins"] + [f"Playoff_Rate_Q{q}" for q in range(1, 5)] \
+        + ["Playoff_Gap_Q4_Q1"]
+    main = pick(res).groupby("Scenario")[measures].mean().reindex(SCENARIOS)
+    gap = by_scenario(res, "Playoff_Gap_Q4_Q1") * 100
+    ns = by_scenario(res, "NollScully")
+
+    actual = actual_row(teams, balance)
+    rows = [("Actual MLB, 2019-2026", actual, None, None)] + \
+           [(sc, main.loc[sc], ns.loc[sc], gap.loc[sc]) for sc in SCENARIOS]
+
+    out = []
+    for label, r, ns_rng, gap_rng in rows:
+        out.append({
+            "": label,
+            "Noll-Scully": f"{r['NollScully']:.2f}",
+            "SD of wins": f"{r['SD_Wins']:.1f}",
+            **{f"Playoff rate, payroll Q{q}": f"{r[f'Playoff_Rate_Q{q}'] * 100:.1f}%"
+               for q in range(1, 5)},
+            "Playoff gap, Q4 - Q1 (pts)": f"{r['Playoff_Gap_Q4_Q1'] * 100:.1f}",
+            "Noll-Scully, $11M-$20M per WAR": "" if ns_rng is None
+                else f"{ns_rng['lo']:.2f}-{ns_rng['hi']:.2f}",
+            "Playoff gap, $11M-$20M per WAR": "" if gap_rng is None
+                else f"{gap_rng['lo']:.1f}-{gap_rng['hi']:.1f}",
+        })
+    config.TABLES_DIR.mkdir(parents=True, exist_ok=True)
+    pd.DataFrame(out).to_csv(TABLE_FILE, index=False)
+
+    sq, cf = main.loc["Status quo"], main.loc["Cap + floor"]
+    TABLE_NOTE.append(
+        f"**Table 4** ({TABLE_FILE.stem}). Competitive balance and playoff access under each "
+        f"rule, 2019-2026 (main specification, {SEASONS_TEXT}). Simulated rows are means over "
+        f"seasons of {simulate.SEASONS_SIMULATED:,} simulated 162-game seasons each at "
+        f"${MAIN_PRICE}M per WAR; the last two columns give the range across $11M, $14.4M and "
+        f"$20M per WAR. Payroll quartiles are each club's CBT payroll quartile within its season "
+        f"under the status quo (Q1 lowest). The first row is the actual league, measured the "
+        f"same way. Noll-Scully is the SD of win percentage divided by the SD luck alone "
+        f"produces over 162 games (1.0 = perfect balance). The simulated status quo "
+        f"(Noll-Scully {sq['NollScully']:.2f}; gap {sq['Playoff_Gap_Q4_Q1'] * 100:.1f} points) is "
+        f"close to the actual league ({actual['NollScully']:.2f}; "
+        f"{actual['Playoff_Gap_Q4_Q1'] * 100:.1f} points). Cap + floor lowers Noll-Scully to "
+        f"{cf['NollScully']:.2f} and the playoff gap to {cf['Playoff_Gap_Q4_Q1'] * 100:.1f} "
+        f"points. {SOURCE}")
+
+
+SEASONS_TEXT = "seasons 2019, 2021-2026"
+
+
 def write_captions():
-    lines = ["# Simulation figure captions", "",
+    lines = ["# Simulation figure and table captions", "",
              "Main specification unless noted: MLB's 2027 proposal ($245.3M cap / $171.2M floor) "
              "restated as multiples of league-average CBT payroll and applied to each season; floor "
              "clubs buy only talent the cap releases; leftover talent goes to clubs between the "
              "thresholds in proportion to their room under the cap; $14.4M per WAR.", ""]
     for i, (name, cap) in enumerate(CAPTIONS, FIRST_FIGURE):
         lines += [f"**Figure {i}** ({name}). {cap}", ""]
+    for note in TABLE_NOTE:
+        lines += [note, ""]
     (config.FIGURES_DIR / "simulation_figure_captions.md").write_text("\n".join(lines), encoding="utf-8")
 
 
@@ -311,8 +386,10 @@ def main():
     fig_talent_movement(teams)
     fig_gap_by_season(res)
     fig_robustness(res)
+    table_results(res, teams, balance)
     write_captions()
     print(f"Saved simulation figures and captions to {config.FIGURES_DIR}")
+    print(f"Saved {TABLE_FILE.name} to {config.TABLES_DIR}")
 
 
 if __name__ == "__main__":
