@@ -48,6 +48,13 @@ any excess is inflation. "Open market" lets floor clubs also bid WAR away from
 every club not bound by the floor, in proportion to the talent those clubs hold,
 which is how free agency would actually redistribute it. Without that variant, a
 floor-only rule moves no talent by construction.
+
+Where leftover talent goes (LEFTOVER_RULE). When the cap frees more talent than
+floor clubs absorb, the rest goes to the clubs between the floor and the cap
+(or, with no floor, every club under the cap) in proportion to their room under
+the cap, and no club takes on more than its room can pay for. Released players
+sign where there is money to pay them. The original rule (in proportion to each
+club's existing WAR) is kept as an option for robustness checks.
 """
 import numpy as np
 import pandas as pd
@@ -72,6 +79,16 @@ SCENARIOS = {
 CAPPED_ONLY = "Capped clubs only"
 OPEN_MARKET = "Open market"
 FLOOR_SUPPLY = (CAPPED_ONLY, OPEN_MARKET)
+
+# Where talent the cap frees goes once floor clubs have taken what they need.
+#   "Cap room": to the remaining clubs in proportion to their room under the
+#       cap, and never more than that room can pay for (any excess passes to
+#       the other clubs). Released players sign where there is money to pay them.
+#   "Existing WAR": in proportion to the talent each club already has (the
+#       original rule), kept for robustness checks. Not limited by cap room.
+CAP_ROOM = "Cap room"
+EXISTING_WAR = "Existing WAR"
+LEFTOVER_RULE = CAP_ROOM
 
 # Headline specification for the printed summary
 MAIN = {"Proposal": thresholds.DEFAULT_PROPOSAL, "Thresholds": thresholds.SCALED,
@@ -116,7 +133,32 @@ def win_model(df):
     return float(intercept), float(slope)
 
 
-def redistribute(season, cap_m, floor_m, price_m, floor_supply=CAPPED_ONLY):
+def allocate_within_limits(amount, weights, limits):
+    """Split `amount` in proportion to `weights`, without giving any club more
+    than its limit. A club that hits its limit keeps exactly that much, and the
+    rest is re-split among the others, until it is all placed or every club is
+    full (anything left then is spread by weight, and the cap is exceeded)."""
+    weights = np.asarray(weights, dtype=float)
+    limits = np.asarray(limits, dtype=float)
+    alloc = np.zeros_like(weights)
+    open_ = weights > 0
+    remaining = float(amount)
+    while remaining > 1e-9 and open_.any():
+        w = np.where(open_, weights, 0.0)
+        proposal = remaining * w / w.sum()
+        full = open_ & (alloc + proposal >= limits - 1e-12)
+        if not full.any():
+            return alloc + proposal
+        remaining -= float((limits[full] - alloc[full]).sum())
+        alloc[full] = limits[full]
+        open_ &= ~full
+    if remaining > 1e-9 and weights.sum() > 0:
+        alloc += remaining * weights / weights.sum()
+    return alloc
+
+
+def redistribute(season, cap_m, floor_m, price_m, floor_supply=CAPPED_ONLY,
+                 leftover_rule=None):
     """Move WAR between clubs to satisfy the thresholds.
 
     cap_m / floor_m are None when the rule is off. floor_supply sets where floor
@@ -125,6 +167,7 @@ def redistribute(season, cap_m, floor_m, price_m, floor_supply=CAPPED_ONLY):
     Returns the season frame with a Sim_WAR column, plus a dict describing
     whether the talent market actually cleared.
     """
+    leftover_rule = LEFTOVER_RULE if leftover_rule is None else leftover_rule
     payroll_m = season["CBT_Payroll"].values / 1e6
     war = season["TotalWAR"].values.astype(float)
 
@@ -161,14 +204,17 @@ def redistribute(season, cap_m, floor_m, price_m, floor_supply=CAPPED_ONLY):
             war_drawn = bought_elsewhere * pool / pool.sum()
             war_gained = war_gained + (dollars_added / price_m) * (bought_elsewhere / war_demanded)
 
-    # Supply above demand has nowhere to go under a cap-only rule; it lands on
-    # the clubs that are neither capped nor floored, in proportion to the talent
-    # they already have, which is the mildest assumption available.
+    # Talent the cap frees beyond what floor clubs absorb goes to the clubs that
+    # are neither capped nor floored (see LEFTOVER_RULE).
     leftover = supply - war_gained.sum()
     neutral = ~over & ~under
-    if leftover > 1e-9 and neutral.any() and war[neutral].sum() > 0:
-        share = np.where(neutral, war, 0.0)
-        war_gained = war_gained + leftover * share / share.sum()
+    if leftover > 1e-9 and neutral.any():
+        if leftover_rule == CAP_ROOM and cap_m:
+            room_m = np.where(neutral, np.maximum(cap_m - payroll_m, 0.0), 0.0)
+            war_gained = war_gained + allocate_within_limits(leftover, room_m, room_m / price_m)
+        elif war[neutral].sum() > 0:
+            share = np.where(neutral, np.maximum(war, 0.0), 0.0)
+            war_gained = war_gained + leftover * share / share.sum()
 
     sim_war = war - war_lost - war_drawn + war_gained
     sim_war = np.maximum(sim_war, 0.0)
