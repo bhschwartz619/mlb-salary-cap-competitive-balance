@@ -115,6 +115,7 @@ Two payroll measures are used, for different jobs:
 │   ├── balance_metrics.py            Step 6: actual competitive balance and who a cap/floor would bind
 │   ├── simulate.py                   Step 7: cap/floor simulation
 │   ├── simulation_figures.py         Step 8: simulation figures (figs 11–16) and Table 4
+│   ├── counterfactual_playoffs.py    Step 9: which clubs would have made the playoffs under each rule (Table 5)
 │   └── run_all.py                    Runs every step in order
 └── README.md
 ```
@@ -130,7 +131,9 @@ Main outputs from the new steps:
 | `results/cap_floor_binding.csv` | Clubs over the cap and under the floor each season, and the dollars involved |
 | `results/simulation_results.csv` | Balance and playoff access for every scenario and specification |
 | `results/simulation_clearing.csv` | Talent released by capped clubs vs. talent demanded by floor clubs |
-| `results/simulation_team_war.csv` | Each club's WAR and expected wins before and after the rules |
+| `results/simulation_team_war.csv` | Each club's WAR, expected wins, and playoff odds before and after the rules |
+| `results/counterfactual_playoffs.csv` | Each club-season's wins and playoff result under each rule, holding the club's real luck fixed |
+| `tables/table5_playoff_changes.csv` | Table 5: every playoff spot that changes hands under cap + floor, 2019–2026 |
 | `tables/table4_simulation_results.csv` | Table 4: balance and playoff access under each rule, with the actual league for comparison |
 | `figures/simulation_figure_captions.md` | Captions for figures 11–16 and Table 4, with numbers generated from the results |
 
@@ -148,7 +151,7 @@ Then, from the `scripts/` folder:
 python run_all.py
 ```
 
-This runs every step in order (cleaning → payroll cleaning → CBT payroll → merge → analysis → salary analysis → figures and tables → competitive balance → simulation → simulation figures) and rebuilds everything in `data/processed/`, `results/`, `figures/`, and `tables/` from the raw data. The full run takes about a minute. Individual steps can also be run on their own (for example, `python simulation_figures.py`) once the earlier steps have been run.
+This runs every step in order (cleaning → payroll cleaning → CBT payroll → merge → analysis → salary analysis → figures and tables → competitive balance → simulation → simulation figures → counterfactual playoffs) and rebuilds everything in `data/processed/`, `results/`, `figures/`, and `tables/` from the raw data. The full run takes about a minute. Individual steps can also be run on their own (for example, `python simulation_figures.py`) once the earlier steps have been run.
 
 ## Project Status
 

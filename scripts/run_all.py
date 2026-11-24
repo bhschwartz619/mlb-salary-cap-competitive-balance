@@ -12,6 +12,7 @@ import salary_analysis
 import figures
 import balance_metrics
 import clean_cbt
+import counterfactual_playoffs
 import simulate
 import simulation_figures
 
@@ -46,6 +47,9 @@ def main():
 
     print("\n########## STEP 8: SIMULATION FIGURES ##########")
     simulation_figures.main()
+
+    print("\n########## STEP 9: COUNTERFACTUAL PLAYOFFS ##########")
+    counterfactual_playoffs.main()
 
     print("\nDone.")
 

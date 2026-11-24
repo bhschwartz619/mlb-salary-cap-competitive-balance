@@ -121,8 +121,8 @@ TEAM_DIVISION = {t: d for d, teams in DIVISIONS.items() for t in teams}
 WILDCARDS_BY_SEASON = {2019: 2, 2021: 2, 2022: 3, 2023: 3, 2024: 3, 2025: 3, 2026: 3}
 
 SIMULATION_FILE = config.RESULTS_DIR / "simulation_results.csv"
-# Each club's WAR before and after the rules, at the main price (for the
-# talent-movement figure)
+# Each club's WAR, expected wins and playoff odds before and after the rules,
+# at the main price (for the talent-movement figure and counterfactual_playoffs.py)
 TEAM_WAR_FILE = config.RESULTS_DIR / "simulation_team_war.csv"
 CLEARING_FILE = config.RESULTS_DIR / "simulation_clearing.csv"
 
@@ -381,8 +381,8 @@ def main():
                             row = balance_of(draws)
                             row.update({f"Playoff_Rate_Q{q}": v for q, v in access.items()})
                             row["Playoff_Gap_Q4_Q1"] = access[4] - access[1]
-                            cache[key] = (row, clearing, sim["Sim_WAR"].values)
-                        row, clearing, sim_war = cache[key]
+                            cache[key] = (row, clearing, sim["Sim_WAR"].values, qualified.mean(axis=0))
+                        row, clearing, sim_war, odds = cache[key]
                         labels = {"Proposal": proposal, "Thresholds": basis,
                                   "Floor_Supply": supply, "Price_M_per_WAR": price,
                                   "Scenario": name, "Year": year,
@@ -402,6 +402,7 @@ def main():
                                 "WAR_Change": sim_war - season["TotalWAR"].values,
                                 "Expected_Wins": intercept + slope * season["TotalWAR"].values,
                                 "Sim_Expected_Wins": intercept + slope * sim_war,
+                                "Playoff_Odds": odds,
                             }))
 
     results = pd.DataFrame(results)
