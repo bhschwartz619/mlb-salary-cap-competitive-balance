@@ -114,7 +114,7 @@ Two payroll measures are used, for different jobs:
 │   ├── figures.py                    Step 5: paper figures and tables (figs 1–10)
 │   ├── balance_metrics.py            Step 6: actual competitive balance and who a cap/floor would bind
 │   ├── simulate.py                   Step 7: cap/floor simulation
-│   ├── simulation_figures.py         Step 8: simulation figures (figs 11–16)
+│   ├── simulation_figures.py         Step 8: simulation figures (figs 11–16) and Table 4
 │   └── run_all.py                    Runs every step in order
 └── README.md
 ```
@@ -131,7 +131,8 @@ Main outputs from the new steps:
 | `results/simulation_results.csv` | Balance and playoff access for every scenario and specification |
 | `results/simulation_clearing.csv` | Talent released by capped clubs vs. talent demanded by floor clubs |
 | `results/simulation_team_war.csv` | Each club's WAR and expected wins before and after the rules |
-| `figures/simulation_figure_captions.md` | Captions for figures 11–16, with numbers generated from the results |
+| `tables/table4_simulation_results.csv` | Table 4: balance and playoff access under each rule, with the actual league for comparison |
+| `figures/simulation_figure_captions.md` | Captions for figures 11–16 and Table 4, with numbers generated from the results |
 
 ## How to Run
 
