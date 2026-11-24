@@ -1,0 +1,12 @@
+Season,League,Gets in,Payroll quartile (in),Actual wins (in),Wins under rule (in),WAR change (in),Playoff odds (in),Drops out,Payroll quartile (out),Actual wins (out),Wins under rule (out),WAR change (out),Playoff odds (out)
+2021,AL,Seattle Mariners,1,90,91.6,1.7,1% -> 2%,Boston Red Sox,4,92,89.3,-2.7,52% -> 40%
+2021,AL,Toronto Blue Jays,3,91,91.5,0.5,94% -> 96%,New York Yankees,4,92,89.2,-2.9,38% -> 27%
+2022,AL,Baltimore Orioles,1,83,87.7,4.8,51% -> 73%,Tampa Bay Rays,1,86,87.2,1.2,64% -> 65%
+2022,NL,Milwaukee Brewers,2,86,87.3,1.3,36% -> 49%,Philadelphia Phillies,4,87,83.9,-3.1,73% -> 60%
+2023,AL,Seattle Mariners,2,88,89.6,1.6,61% -> 67%,Toronto Blue Jays,4,89,86.5,-2.5,77% -> 59%
+2023,NL,Cincinnati Reds,1,82,85.3,3.4,22% -> 43%,Arizona Diamondbacks,2,84,85.0,1.0,31% -> 38%
+2024,AL,Seattle Mariners,2,85,87.8,2.8,61% -> 72%,Houston Astros,4,88,85.7,-2.3,84% -> 66%
+2024,NL,Arizona Diamondbacks,3,89,89.2,0.2,60% -> 71%,New York Mets,4,89,80.4,-8.7,31% -> 6%
+2025,NL,Miami Marlins,1,79,83.7,4.8,3% -> 20%,Los Angeles Dodgers,4,93,80.8,-12.4,72% -> 15%
+2026,AL,Texas Rangers,3,80,81.6,1.6,35% -> 33%,Houston Astros,3,81,81.0,0.0,40% -> 34%
+2026,NL,Arizona Diamondbacks,3,86,86.5,0.5,35% -> 41%,Philadelphia Phillies,4,88,82.3,-5.8,52% -> 17%
