@@ -34,27 +34,48 @@ a modelling choice a reader should be able to disagree with.
 
 Scenarios are run on CBT payroll, the basis a real cap or floor would be
 assessed on, so coverage is 2019 onward.
+
+Thresholds (thresholds.py). MLB's proposals are dollar amounts for 2027 or 2028.
+The main results restate each as a multiple of league-average CBT payroll
+(about 1.14x for the cap, 0.80x for the floor) and apply that multiple to each
+season's own average, so 2019 is judged against 2019 payrolls rather than 2027
+dollars. Fixed-dollar thresholds are kept as a robustness check. Both proposals
+(2027: $245.3M / $171.2M; 2028: $258.2M / $180.2M) are run.
+
+Where floor money finds talent (FLOOR_SUPPLY). "Capped clubs only" is the
+original rule above: floor clubs can buy only the WAR capped clubs release, and
+any excess is inflation. "Open market" lets floor clubs also bid WAR away from
+every club not bound by the floor, in proportion to the talent those clubs hold,
+which is how free agency would actually redistribute it. Without that variant, a
+floor-only rule moves no talent by construction.
 """
 import numpy as np
 import pandas as pd
 
 import balance_metrics
 import config
-
-CAP_M = balance_metrics.CAP_M
-FLOOR_M = balance_metrics.FLOOR_M
+import thresholds
 
 # Dollars per WAR, in 2026 terms. The middle value is what the panel estimates;
 # the outer two bound it, since the clearing price should move when the payroll
 # distribution is compressed.
 PRICES_M = (11.0, 14.4, 20.0)
 
+# Which rules each scenario applies: (cap, floor)
 SCENARIOS = {
-    "Status quo": (None, None),
-    "Cap only": (CAP_M, None),
-    "Floor only": (None, FLOOR_M),
-    "Cap + floor": (CAP_M, FLOOR_M),
+    "Status quo": (False, False),
+    "Cap only": (True, False),
+    "Floor only": (False, True),
+    "Cap + floor": (True, True),
 }
+
+CAPPED_ONLY = "Capped clubs only"
+OPEN_MARKET = "Open market"
+FLOOR_SUPPLY = (CAPPED_ONLY, OPEN_MARKET)
+
+# Headline specification for the printed summary
+MAIN = {"Proposal": thresholds.DEFAULT_PROPOSAL, "Thresholds": thresholds.SCALED,
+        "Floor_Supply": CAPPED_ONLY, "Price_M_per_WAR": 14.4}
 
 SEASONS_SIMULATED = 2000
 GAMES = 162
@@ -95,8 +116,11 @@ def win_model(df):
     return float(intercept), float(slope)
 
 
-def redistribute(season, cap_m, floor_m, price_m):
+def redistribute(season, cap_m, floor_m, price_m, floor_supply=CAPPED_ONLY):
     """Move WAR between clubs to satisfy the thresholds.
+
+    cap_m / floor_m are None when the rule is off. floor_supply sets where floor
+    clubs may find talent (see FLOOR_SUPPLY in the module docstring).
 
     Returns the season frame with a Sim_WAR column, plus a dict describing
     whether the talent market actually cleared.
@@ -125,6 +149,18 @@ def redistribute(season, cap_m, floor_m, price_m):
     else:
         war_gained = np.zeros(len(season))
 
+    # Open market: demand the capped clubs cannot meet is bid away from every
+    # club not bound by the floor, in proportion to the talent each still holds.
+    war_drawn = np.zeros(len(season))
+    bought_elsewhere = 0.0
+    unmet = max(0.0, war_demanded - supply)
+    if floor_supply == OPEN_MARKET and unmet > 1e-9:
+        pool = np.where(~under, np.maximum(war - war_lost, 0.0), 0.0)
+        if pool.sum() > 0:
+            bought_elsewhere = min(unmet, pool.sum())
+            war_drawn = bought_elsewhere * pool / pool.sum()
+            war_gained = war_gained + (dollars_added / price_m) * (bought_elsewhere / war_demanded)
+
     # Supply above demand has nowhere to go under a cap-only rule; it lands on
     # the clubs that are neither capped nor floored, in proportion to the talent
     # they already have, which is the mildest assumption available.
@@ -134,7 +170,7 @@ def redistribute(season, cap_m, floor_m, price_m):
         share = np.where(neutral, war, 0.0)
         war_gained = war_gained + leftover * share / share.sum()
 
-    sim_war = war - war_lost + war_gained
+    sim_war = war - war_lost - war_drawn + war_gained
     sim_war = np.maximum(sim_war, 0.0)
 
     # Conserve the season's league total.
@@ -148,9 +184,11 @@ def redistribute(season, cap_m, floor_m, price_m):
         "Clubs_Below_Floor": int(under.sum()),
         "WAR_Released": war_released,
         "WAR_Demanded": war_demanded,
-        "WAR_Actually_Moved": float(min(supply, war_demanded)) if war_demanded else float(supply),
-        "Unmet_Demand_WAR": float(max(0.0, war_demanded - supply)),
-        "Inflation_Only_M": float(max(0.0, war_demanded - supply) * price_m),
+        "WAR_Bought_From_Other_Clubs": float(bought_elsewhere),
+        "WAR_Actually_Moved": (float(min(supply + bought_elsewhere, war_demanded))
+                               if war_demanded else float(supply)),
+        "Unmet_Demand_WAR": float(max(0.0, war_demanded - supply - bought_elsewhere)),
+        "Inflation_Only_M": float(max(0.0, war_demanded - supply - bought_elsewhere) * price_m),
     }
     return out, clearing
 
@@ -225,6 +263,16 @@ def playoff_access(qualified, quartiles):
     return out
 
 
+def summary(results, spec, value):
+    """Pivot one measure for one specification: scenarios down, prices across."""
+    keep = np.ones(len(results), dtype=bool)
+    for k, v in spec.items():
+        keep &= results[k].values == v
+    return (results[keep].pivot_table(index="Scenario", columns="Price_M_per_WAR",
+                                      values=value, aggfunc="mean")
+            .reindex(SCENARIOS.keys()))
+
+
 def main():
     merged = pd.read_csv(config.MERGED_FILE)
     cbt = balance_metrics.load_cbt()
@@ -244,70 +292,99 @@ def main():
           f"{SEASONS_SIMULATED} draws each")
     print(f"Win model from the panel: wins = {intercept:.1f} + {slope:.3f} x WAR")
     print(f"Prices tested: {', '.join(f'${p:.1f}M/WAR' for p in PRICES_M)}")
+    avg = thresholds.league_average(cbt)
+    for name in thresholds.PROPOSALS:
+        r = thresholds.proposal_ratios(name, avg)
+        print(f"{name}: cap = {r['cap_ratio']:.2f}x and floor = {r['floor_ratio']:.2f}x "
+              f"league-average CBT payroll (projected ${r['projected_avg_m']:.1f}M, "
+              f"{r['growth'] * 100:.1f}%/yr growth)")
 
+    # Season thresholds for every proposal and threshold basis
+    limits = {(p, b): thresholds.season_thresholds(cbt, p, b).set_index("Year")
+              for p in thresholds.PROPOSALS for b in thresholds.THRESHOLD_BASES}
+
+    # Every combination. Rules a scenario does not use cannot change it, so the
+    # status quo is simulated once per price and season and the cap-only
+    # scenario once per threshold set; their rows are labelled for every
+    # specification so each specification has a complete set of scenarios.
     results, clearings = [], []
     for price in PRICES_M:
-        for name, (cap_m, floor_m) in SCENARIOS.items():
-            for year, season in df.groupby("Year"):
-                sim, clearing = redistribute(season, cap_m, floor_m, price)
-                draws = simulate_wins(sim["Sim_WAR"].values, intercept, slope, rng)
-                divisions = season["Team"].map(TEAM_DIVISION).values
-                leagues = np.array([d[:2] for d in divisions])
-                qualified = playoff_berths(
-                    draws, divisions, leagues,
-                    WILDCARDS_BY_SEASON.get(int(year), 3), rng)
-                access = playoff_access(qualified, season["Payroll_Quartile"].values)
-
-                row = {"Price_M_per_WAR": price, "Scenario": name, "Year": year}
-                row.update(balance_of(draws))
-                row.update({f"Playoff_Rate_Q{q}": v for q, v in access.items()})
-                row["Playoff_Gap_Q4_Q1"] = access[4] - access[1]
-                results.append(row)
-                clearings.append({"Price_M_per_WAR": price, "Scenario": name,
-                                  "Year": year, **clearing})
+        for year, season in df.groupby("Year"):
+            divisions = season["Team"].map(TEAM_DIVISION).values
+            leagues = np.array([d[:2] for d in divisions])
+            n_wc = WILDCARDS_BY_SEASON.get(int(year), 3)
+            cache = {}
+            for (proposal, basis), lim in limits.items():
+                cap_y, floor_y = lim.loc[year, "Cap_M"], lim.loc[year, "Floor_M"]
+                for supply in FLOOR_SUPPLY:
+                    for name, (use_cap, use_floor) in SCENARIOS.items():
+                        key = (name,
+                               cap_y if use_cap else None,
+                               floor_y if use_floor else None,
+                               supply if use_floor else None)
+                        if key not in cache:
+                            sim, clearing = redistribute(
+                                season, key[1], key[2], price,
+                                supply if use_floor else CAPPED_ONLY)
+                            draws = simulate_wins(sim["Sim_WAR"].values, intercept, slope, rng)
+                            qualified = playoff_berths(draws, divisions, leagues, n_wc, rng)
+                            access = playoff_access(qualified, season["Payroll_Quartile"].values)
+                            row = balance_of(draws)
+                            row.update({f"Playoff_Rate_Q{q}": v for q, v in access.items()})
+                            row["Playoff_Gap_Q4_Q1"] = access[4] - access[1]
+                            cache[key] = (row, clearing)
+                        row, clearing = cache[key]
+                        labels = {"Proposal": proposal, "Thresholds": basis,
+                                  "Floor_Supply": supply, "Price_M_per_WAR": price,
+                                  "Scenario": name, "Year": year,
+                                  "Cap_M": cap_y if use_cap else np.nan,
+                                  "Floor_M": floor_y if use_floor else np.nan}
+                        results.append({**labels, **row})
+                        clearings.append({**labels, **clearing})
 
     results = pd.DataFrame(results)
     clearings = pd.DataFrame(clearings)
 
+    spec = {k: v for k, v in MAIN.items() if k != "Price_M_per_WAR"}
+    title = f"{MAIN['Proposal']}, {MAIN['Thresholds'].lower()}, floor supply: {MAIN['Floor_Supply'].lower()}"
+
+    print(f"\nMAIN SPECIFICATION: {title}")
     print("\nMean Noll-Scully by scenario and price (lower = more balanced)")
-    pivot = (results.pivot_table(index="Scenario", columns="Price_M_per_WAR",
-                                 values="NollScully", aggfunc="mean")
-             .reindex(SCENARIOS.keys()))
-    print(pivot.round(3).to_string())
-
+    print(summary(results, spec, "NollScully").round(3).to_string())
     print("\nMean SD of wins by scenario and price")
-    pivot_sd = (results.pivot_table(index="Scenario", columns="Price_M_per_WAR",
-                                    values="SD_Wins", aggfunc="mean")
-                .reindex(SCENARIOS.keys()))
-    print(pivot_sd.round(2).to_string())
+    print(summary(results, spec, "SD_Wins").round(2).to_string())
 
-    print(f"\nDid the talent market clear? (at ${PRICES_M[1]:.1f}M/WAR)")
-    mid = clearings[clearings["Price_M_per_WAR"] == PRICES_M[1]]
-    for name in SCENARIOS:
-        block = mid[mid.Scenario == name]
-        if name == "Status quo":
-            continue
-        print(f"   --- {name} ---")
-        for _, r in block.iterrows():
-            flag = "" if r.Unmet_Demand_WAR < 0.5 else \
-                   f"   UNMET {r.Unmet_Demand_WAR:5.1f} WAR = ${r.Inflation_Only_M:6.0f}M inflation"
-            print(f"   {int(r.Year)}   released {r.WAR_Released:5.1f}   "
-                  f"demanded {r.WAR_Demanded:5.1f}{flag}")
-
-    print(f"\nPlayoff rate by status-quo payroll quartile (at ${PRICES_M[1]:.1f}M/WAR)")
-    mid_res = results[results["Price_M_per_WAR"] == PRICES_M[1]]
-    access_tbl = (mid_res.groupby("Scenario")[
+    mid_spec = {**spec, "Price_M_per_WAR": MAIN["Price_M_per_WAR"]}
+    keep = np.ones(len(results), dtype=bool)
+    for k, v in mid_spec.items():
+        keep &= results[k].values == v
+    access_tbl = (results[keep].groupby("Scenario")[
         ["Playoff_Rate_Q1", "Playoff_Rate_Q2", "Playoff_Rate_Q3",
-         "Playoff_Rate_Q4", "Playoff_Gap_Q4_Q1"]]
-        .mean().reindex(SCENARIOS.keys()))
+         "Playoff_Rate_Q4", "Playoff_Gap_Q4_Q1"]].mean().reindex(SCENARIOS.keys()))
     access_tbl.columns = ["Q1 (low)", "Q2", "Q3", "Q4 (high)", "Q4 - Q1"]
+    print(f"\nPlayoff rate by status-quo payroll quartile (at ${MAIN['Price_M_per_WAR']:.1f}M/WAR)")
     print(access_tbl.round(3).to_string())
 
-    print("\nQ4 - Q1 playoff gap by price (does the result survive the price?)")
-    gap = (results.pivot_table(index="Scenario", columns="Price_M_per_WAR",
-                               values="Playoff_Gap_Q4_Q1", aggfunc="mean")
-           .reindex(SCENARIOS.keys()))
-    print(gap.round(3).to_string())
+    print(f"\nDid the talent market clear? (at ${MAIN['Price_M_per_WAR']:.1f}M/WAR)")
+    keep_c = np.ones(len(clearings), dtype=bool)
+    for k, v in mid_spec.items():
+        keep_c &= clearings[k].values == v
+    mid = clearings[keep_c]
+    for name in list(SCENARIOS)[1:]:
+        print(f"   --- {name} ---")
+        for _, r in mid[mid.Scenario == name].iterrows():
+            flag = "" if r.Unmet_Demand_WAR < 0.5 else \
+                   f"   UNMET {r.Unmet_Demand_WAR:5.1f} WAR = ${r.Inflation_Only_M:6.0f}M inflation"
+            print(f"   {int(r.Year)}   over cap {int(r.Clubs_Over_Cap):2d}  below floor "
+                  f"{int(r.Clubs_Below_Floor):2d}   released {r.WAR_Released:5.1f}   "
+                  f"demanded {r.WAR_Demanded:5.1f}{flag}")
+
+    print(f"\nROBUSTNESS: Q4 - Q1 playoff gap and Noll-Scully at ${MAIN['Price_M_per_WAR']:.1f}M/WAR")
+    at_mid = results[results.Price_M_per_WAR == MAIN["Price_M_per_WAR"]]
+    robust = (at_mid.groupby(["Proposal", "Thresholds", "Floor_Supply", "Scenario"], sort=False)
+              [["NollScully", "Playoff_Gap_Q4_Q1"]].mean().unstack("Scenario"))
+    robust = robust.reindex(columns=list(SCENARIOS), level=1)
+    print(robust.round(3).to_string())
 
     results.to_csv(SIMULATION_FILE, index=False)
     clearings.to_csv(CLEARING_FILE, index=False)

@@ -34,10 +34,13 @@ import pandas as pd
 
 import config
 import team_names
+import thresholds
 
-# MLB's reported 2027 proposal, $M. Change these to test other thresholds.
-CAP_M = 245.3
-FLOOR_M = 171.2
+# MLB's 2027 proposal in nominal dollars, $M. Used for the Opening Day basis,
+# which has no league-average CBT figure to scale against. Proposals and their
+# scaling live in thresholds.py.
+CAP_M = thresholds.PROPOSALS[thresholds.DEFAULT_PROPOSAL]["cap_m"]
+FLOOR_M = thresholds.PROPOSALS[thresholds.DEFAULT_PROPOSAL]["floor_m"]
 
 # Payroll bases the binding counts are reported on. Opening Day covers every
 # season; CBT covers 2019 onward (earlier Cot's sheets have no CBT row) and is
@@ -107,27 +110,46 @@ def load_cbt():
 
 
 def cap_floor_binding(df, cbt=None, cap_m=CAP_M, floor_m=FLOOR_M):
-    """For each season and payroll basis: who binds, and by how much."""
-    bases = [("Opening Day", df[["Year", "Team", "Cots_OD_Payroll"]]
-              .rename(columns={"Cots_OD_Payroll": "Payroll"}))]
+    """For each season, payroll basis, proposal and threshold basis: who binds,
+    and by how much.
+
+    Opening Day payroll is reported against the 2027 proposal in fixed dollars
+    only (there is no league-average CBT figure to scale it against). CBT payroll
+    is reported for every proposal, both scaled to each season and in fixed
+    dollars.
+    """
+    od = df[["Year", "Team", "Cots_OD_Payroll"]].rename(columns={"Cots_OD_Payroll": "Payroll"})
+    years = sorted(od["Year"].unique())
+    runs = [("Opening Day", thresholds.DEFAULT_PROPOSAL, thresholds.FIXED, od,
+             pd.DataFrame({"Year": years, "Cap_M": cap_m, "Floor_M": floor_m}))]
     if cbt is not None:
-        bases.append(("CBT", cbt.rename(columns={"CBT_Payroll": "Payroll"})))
+        table = cbt.rename(columns={"CBT_Payroll": "Payroll"})
+        for proposal in thresholds.PROPOSALS:
+            for basis in thresholds.THRESHOLD_BASES:
+                runs.append(("CBT", proposal, basis, table,
+                             thresholds.season_thresholds(cbt, proposal, basis)))
 
     rows = []
-    for basis, table in bases:
+    for basis, proposal, threshold_basis, table, limits in runs:
+        limits = limits.set_index("Year")
         for year, season in table.groupby("Year"):
+            cap_y, floor_y = limits.loc[year, "Cap_M"], limits.loc[year, "Floor_M"]
             payroll = season["Payroll"] / 1e6
-            over = payroll > cap_m
-            under = payroll < floor_m
+            over = payroll > cap_y
+            under = payroll < floor_y
             rows.append({
                 "Year": year,
                 "Basis": basis,
+                "Proposal": proposal,
+                "Thresholds": threshold_basis,
+                "Cap_M": cap_y,
+                "Floor_M": floor_y,
                 "Teams": len(season),
                 "Teams_Over_Cap": int(over.sum()),
                 "Teams_Below_Floor": int(under.sum()),
                 "Teams_Unaffected": int((~over & ~under).sum()),
-                "Dollars_Cut_M": float((payroll[over] - cap_m).sum()),
-                "Dollars_Added_M": float((floor_m - payroll[under]).sum()),
+                "Dollars_Cut_M": float((payroll[over] - cap_y).sum()),
+                "Dollars_Added_M": float((floor_y - payroll[under]).sum()),
             })
     binding = pd.DataFrame(rows)
     binding["Net_Change_M"] = binding["Dollars_Added_M"] - binding["Dollars_Cut_M"]
@@ -230,11 +252,13 @@ def report(balance, binding, concentration, by_payroll, latest_year, df):
     for column in ["NollScully", "SD_Wins", "Gini_Wins", "Gini_Payroll", "Payroll_CV"]:
         print(f"   {column:14} r = {np.corrcoef(balance.Year, balance[column])[0, 1]:+.2f}")
 
-    print(f"\nWho a ${CAP_M:.1f}M cap / ${FLOOR_M:.1f}M floor would bind")
-    for basis in binding.Basis.unique():
-        print(f"   --- {basis} payroll ---")
-        for _, row in binding[binding.Basis == basis].iterrows():
-            print(f"   {int(row.Year)}   over cap: {row.Teams_Over_Cap:2d}   "
+    print("\nWho a cap and floor would bind")
+    groups = binding.groupby(["Basis", "Proposal", "Thresholds"], sort=False)
+    for (basis, proposal, threshold_basis), block in groups:
+        print(f"   --- {basis} payroll, {proposal}, {threshold_basis.lower()} ---")
+        for _, row in block.iterrows():
+            print(f"   {int(row.Year)}   cap ${row.Cap_M:5.1f}M  floor ${row.Floor_M:5.1f}M   "
+                  f"over cap: {row.Teams_Over_Cap:2d}   "
                   f"below floor: {row.Teams_Below_Floor:2d}   "
                   f"cut ${row.Dollars_Cut_M:6.1f}M   add ${row.Dollars_Added_M:6.1f}M   "
                   f"net {row.Net_Change_M:+7.1f}M")
