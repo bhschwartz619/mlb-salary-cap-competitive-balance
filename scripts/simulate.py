@@ -121,6 +121,9 @@ TEAM_DIVISION = {t: d for d, teams in DIVISIONS.items() for t in teams}
 WILDCARDS_BY_SEASON = {2019: 2, 2021: 2, 2022: 3, 2023: 3, 2024: 3, 2025: 3, 2026: 3}
 
 SIMULATION_FILE = config.RESULTS_DIR / "simulation_results.csv"
+# Each club's WAR before and after the rules, at the main price (for the
+# talent-movement figure)
+TEAM_WAR_FILE = config.RESULTS_DIR / "simulation_team_war.csv"
 CLEARING_FILE = config.RESULTS_DIR / "simulation_clearing.csv"
 
 
@@ -353,7 +356,7 @@ def main():
     # status quo is simulated once per price and season and the cap-only
     # scenario once per threshold set; their rows are labelled for every
     # specification so each specification has a complete set of scenarios.
-    results, clearings = [], []
+    results, clearings, team_rows = [], [], []
     for price in PRICES_M:
         for year, season in df.groupby("Year"):
             divisions = season["Team"].map(TEAM_DIVISION).values
@@ -378,8 +381,8 @@ def main():
                             row = balance_of(draws)
                             row.update({f"Playoff_Rate_Q{q}": v for q, v in access.items()})
                             row["Playoff_Gap_Q4_Q1"] = access[4] - access[1]
-                            cache[key] = (row, clearing)
-                        row, clearing = cache[key]
+                            cache[key] = (row, clearing, sim["Sim_WAR"].values)
+                        row, clearing, sim_war = cache[key]
                         labels = {"Proposal": proposal, "Thresholds": basis,
                                   "Floor_Supply": supply, "Price_M_per_WAR": price,
                                   "Scenario": name, "Year": year,
@@ -387,6 +390,19 @@ def main():
                                   "Floor_M": floor_y if use_floor else np.nan}
                         results.append({**labels, **row})
                         clearings.append({**labels, **clearing})
+                        if price == MAIN["Price_M_per_WAR"]:
+                            team_rows.append(pd.DataFrame({
+                                **{k: labels[k] for k in ("Proposal", "Thresholds", "Floor_Supply",
+                                                          "Scenario", "Year", "Cap_M", "Floor_M")},
+                                "Team": season["Team"].values,
+                                "CBT_Payroll_M": season["CBT_Payroll"].values / 1e6,
+                                "Payroll_Quartile": season["Payroll_Quartile"].values,
+                                "WAR": season["TotalWAR"].values,
+                                "Sim_WAR": sim_war,
+                                "WAR_Change": sim_war - season["TotalWAR"].values,
+                                "Expected_Wins": intercept + slope * season["TotalWAR"].values,
+                                "Sim_Expected_Wins": intercept + slope * sim_war,
+                            }))
 
     results = pd.DataFrame(results)
     clearings = pd.DataFrame(clearings)
@@ -434,7 +450,8 @@ def main():
 
     results.to_csv(SIMULATION_FILE, index=False)
     clearings.to_csv(CLEARING_FILE, index=False)
-    print(f"\nSaved: {SIMULATION_FILE.name}, {CLEARING_FILE.name}")
+    pd.concat(team_rows, ignore_index=True).to_csv(TEAM_WAR_FILE, index=False)
+    print(f"\nSaved: {SIMULATION_FILE.name}, {CLEARING_FILE.name}, {TEAM_WAR_FILE.name}")
 
 
 if __name__ == "__main__":

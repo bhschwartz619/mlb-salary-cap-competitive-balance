@@ -13,6 +13,7 @@ import figures
 import balance_metrics
 import clean_cbt
 import simulate
+import simulation_figures
 
 
 def main():
@@ -42,6 +43,9 @@ def main():
 
     print("\n########## STEP 7: SIMULATION ##########")
     simulate.main()
+
+    print("\n########## STEP 8: SIMULATION FIGURES ##########")
+    simulation_figures.main()
 
     print("\nDone.")
 
